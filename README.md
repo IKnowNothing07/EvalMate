@@ -1,4 +1,4 @@
-# ChessIQ — AI Chess Game Review (v0.2)
+# EvalMate — AI Chess Game Review (v0.2)
 Local Stockfish game review as a Manifest V3 Chrome extension. Nothing is uploaded; no telemetry; no API keys.
 
 ## Setup (Windows PowerShell)
