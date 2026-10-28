@@ -1,0 +1,39 @@
+{
+  "name": "chessiq",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "vitest run",
+    "build": "tsc --noEmit && vite build",
+    "dev": "vite build --watch",
+    "typecheck": "tsc --noEmit",
+    "build:openings": "node scripts/build-openings.mjs",
+    "dataset:build": "tsx scripts/dataset.ts build",
+    "dataset:import": "tsx scripts/dataset.ts import",
+    "dataset:report": "tsx scripts/dataset.ts report",
+    "dataset:puzzles": "tsx scripts/dataset.ts puzzles",
+    "build:web": "tsc --noEmit && vite build --config vite.config.web.mts && node scripts/clean-web.mjs",
+    "preview:web": "vite preview --config vite.config.web.mts --outDir docs"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "chess.js": "^1.4.0",
+    "react": "^19.3.1",
+    "react-dom": "^19.3.1"
+  },
+  "devDependencies": {
+    "@types/chrome": "^0.3.6",
+    "@types/node": "^26.6.5",
+    "@types/react": "^19.3.0",
+    "@types/react-dom": "^19.3.0",
+    "@vitejs/plugin-react": "^6.1.2",
+    "stockfish": "^19.0.1",
+    "tsx": "^4.23.15",
+    "typescript": "^7.0.2",
+    "vite": "^8.3.5",
+    "vitest": "^5.0.5"
+  }
+}

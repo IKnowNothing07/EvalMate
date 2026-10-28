@@ -1,0 +1,99 @@
+[
+ {
+  "id": "man-opera-16w-qb8",
+  "gameId": "opera-1858",
+  "ply": 31,
+  "san": "Qb8+",
+  "label": "brilliant",
+  "provenance": "manually-reviewed",
+  "source": "Reviewer: the assistant (not independent). Famous queen sacrifice; engine confirms a forced mate follows. Chess.com label NOT verified.",
+  "testable": true,
+  "tags": [
+   "sound-sacrifice",
+   "queen-sacrifice",
+   "forced-mate"
+  ]
+ },
+ {
+  "id": "man-opera-17w-rd8",
+  "gameId": "opera-1858",
+  "ply": 33,
+  "san": "Rd8#",
+  "label": "best",
+  "provenance": "manually-reviewed",
+  "source": "Reviewer: the assistant. Checkmate delivered; cannot be anything but best.",
+  "testable": true,
+  "tags": [
+   "checkmate-sequence"
+  ]
+ },
+ {
+  "id": "man-legal-5w-nxe5",
+  "gameId": "legal-1750",
+  "ply": 9,
+  "san": "Nxe5",
+  "label": "brilliant",
+  "provenance": "manually-reviewed",
+  "source": "Reviewer: the assistant. Queen left en prise, punished by a mating attack. Chess.com label NOT verified.",
+  "testable": true,
+  "tags": [
+   "sound-sacrifice",
+   "piece-left-hanging"
+  ]
+ },
+ {
+  "id": "man-legal-5b-bxd1",
+  "gameId": "legal-1750",
+  "ply": 10,
+  "san": "Bxd1",
+  "label": "blunder",
+  "provenance": "manually-reviewed",
+  "source": "Reviewer: the assistant. Greedy capture that allows mate in 2.",
+  "testable": true,
+  "tags": [
+   "mate-allowed",
+   "losing-sacrifice"
+  ]
+ },
+ {
+  "id": "man-fools-2w-g4",
+  "gameId": "fools-mate",
+  "ply": 3,
+  "san": "g4",
+  "label": "blunder",
+  "provenance": "manually-reviewed",
+  "source": "Reviewer: the assistant. Allows mate in 1.",
+  "testable": true,
+  "tags": [
+   "mate-allowed"
+  ]
+ },
+ {
+  "id": "man-scholar-3b-nf6",
+  "gameId": "scholars-mate",
+  "ply": 6,
+  "san": "Nf6",
+  "label": "blunder",
+  "provenance": "manually-reviewed",
+  "source": "Reviewer: the assistant. Ignores the Qxf7# threat.",
+  "testable": true,
+  "tags": [
+   "mate-allowed"
+  ]
+ },
+ {
+  "id": "man-immortal-22w-qf6",
+  "gameId": "immortal-1851",
+  "ply": 43,
+  "san": "Qf6+",
+  "label": "brilliant",
+  "provenance": "manually-reviewed",
+  "source": "Reviewer: the assistant. Queen sacrifice leading to forced mate (Qf6+ Nxf6 Be7#).",
+  "testable": true,
+  "tags": [
+   "sound-sacrifice",
+   "queen-sacrifice",
+   "forced-mate"
+  ]
+ }
+]

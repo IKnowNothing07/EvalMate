@@ -1,0 +1,46 @@
+[
+ {
+  "id": "cc185958600578-17w-bxa6",
+  "gameId": "cc-185958600578-from17",
+  "ply": 1,
+  "san": "Bxa6",
+  "label": "brilliant",
+  "provenance": "chesscom-verified",
+  "source": "Chess.com Game Review screenshot (analysis/game/live/185958600578, move 17): \"Bxa6 is brilliant ... sacrificing your bishop\", eval +4.99",
+  "testable": true,
+  "tags": [
+   "sound-sacrifice"
+  ]
+ },
+ {
+  "id": "cc185958600578-17b-bxa6",
+  "gameId": "cc-185958600578-from17",
+  "ply": 2,
+  "san": "bxa6",
+  "label": "mistake",
+  "provenance": "chesscom-verified",
+  "source": "Chess.com Game Review screenshot, move list shows an orange \"?\" on 17...bxa6",
+  "testable": true,
+  "tags": [
+   "eval-sign-change"
+  ],
+  "note": "CALIBRATION DATA: this label motivated the mate-allowed floor in classify.ts after the classifier first said Inaccuracy. It is no longer an independent test of that rule.",
+  "usedForCalibration": true
+ },
+ {
+  "id": "cc185958600578-14w-ne4",
+  "label": "great",
+  "provenance": "chesscom-verified",
+  "source": "Chess.com Game Review screenshot move list: blue \"!\" on 14.Ne4 (harsh12chess)",
+  "testable": false,
+  "missing": "Position before move 14 is not available (full PGN not provided). Supply the PGN to make this testable."
+ },
+ {
+  "id": "cc185958600578-16b-qd5",
+  "label": "blunder",
+  "provenance": "chesscom-verified",
+  "source": "Chess.com Game Review screenshot move list: red \"??\" on 16...Qd5 (Banditoes)",
+  "testable": false,
+  "missing": "Position before move 16 is not available (full PGN not provided). Supply the PGN to make this testable."
+ }
+]

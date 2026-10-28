@@ -1,0 +1,125 @@
+[
+ {
+  "id": "opera-1858",
+  "title": "Morphy vs Duke of Brunswick & Count Isouard, Paris 1858 (Opera Game)",
+  "origin": "Public-domain historical game (moves are facts); transcribed from memory and validated by chess.js (legal, ends in mate)",
+  "license": "Public domain",
+  "tags": [
+   "sound-sacrifice",
+   "checkmate-sequence",
+   "queen-sacrifice",
+   "forced-mate"
+  ],
+  "pgn": "[Event \"Opera Game\"]\n[White \"Paul Morphy\"]\n[Black \"Duke of Brunswick\"]\n[Result \"1-0\"]\n\n1. e4 e5 2. Nf3 d6 3. d4 Bg4 4. dxe5 Bxf3 5. Qxf3 dxe5 6. Bc4 Nf6 7. Qb3 Qe7 8. Nc3 c6 9. Bg5 b5 10. Nxb5 cxb5 11. Bxb5+ Nbd7 12. O-O-O Rd8 13. Rxd7 Rxd7 14. Rd1 Qe6 15. Bxd7+ Nxd7 16. Qb8+ Nxb8 17. Rd8# 1-0"
+ },
+ {
+  "id": "immortal-1851",
+  "title": "Anderssen vs Kieseritzky, London 1851 (Immortal Game)",
+  "origin": "Public-domain historical game",
+  "license": "Public domain",
+  "tags": [
+   "sound-sacrifice",
+   "losing-sacrifice",
+   "checkmate-sequence",
+   "eval-sign-change",
+   "missed-win"
+  ],
+  "pgn": "[Event \"Immortal Game\"]\n[White \"Adolf Anderssen\"]\n[Black \"Lionel Kieseritzky\"]\n[Result \"1-0\"]\n\n1. e4 e5 2. f4 exf4 3. Bc4 Qh4+ 4. Kf1 b5 5. Bxb5 Nf6 6. Nf3 Qh6 7. d3 Nh5 8. Nh4 Qg5 9. Nf5 c6 10. g4 Nf6 11. Rg1 cxb5 12. h4 Qg6 13. h5 Qg5 14. Qf3 Ng8 15. Bxf4 Qf6 16. Nc3 Bc5 17. Nd5 Qxb2 18. Bd6 Bxg1 19. e5 Qxa1+ 20. Ke2 Na6 21. Nxg7+ Kd8 22. Qf6+ Nxf6 23. Be7# 1-0"
+ },
+ {
+  "id": "evergreen-1852",
+  "title": "Anderssen vs Dufresne, Berlin 1852 (Evergreen Game)",
+  "origin": "Public-domain historical game",
+  "license": "Public domain",
+  "tags": [
+   "sound-sacrifice",
+   "checkmate-sequence",
+   "forced-move"
+  ],
+  "pgn": "[Event \"Evergreen Game\"]\n[White \"Adolf Anderssen\"]\n[Black \"Jean Dufresne\"]\n[Result \"1-0\"]\n\n1. e4 e5 2. Nf3 Nc6 3. Bc4 Bc5 4. b4 Bxb4 5. c3 Ba5 6. d4 exd4 7. O-O d3 8. Qb3 Qf6 9. e5 Qg6 10. Re1 Nge7 11. Ba3 b5 12. Qxb5 Rb8 13. Qa4 Bb6 14. Nbd2 Bb7 15. Ne4 Qf5 16. Bxd3 Qh5 17. Nf6+ gxf6 18. exf6 Rg8 19. Rad1 Qxf3 20. Rxe7+ Nxe7 21. Qxd7+ Kxd7 22. Bf5+ Ke8 23. Bd7+ Kf8 24. Bxe7# 1-0"
+ },
+ {
+  "id": "legal-1750",
+  "title": "L\u00e9gal's mate (Saint Brie vs L\u00e9gal, Paris 1750)",
+  "origin": "Public-domain historical game",
+  "license": "Public domain",
+  "tags": [
+   "sound-sacrifice",
+   "losing-sacrifice",
+   "checkmate-sequence",
+   "piece-left-hanging"
+  ],
+  "pgn": "[Event \"Legal Trap\"]\n[White \"Legal\"]\n[Black \"Saint Brie\"]\n[Result \"1-0\"]\n\n1. e4 e5 2. Nf3 d6 3. Bc4 Bg4 4. Nc3 g6 5. Nxe5 Bxd1 6. Bxf7+ Ke7 7. Nd5# 1-0"
+ },
+ {
+  "id": "scholars-mate",
+  "title": "Scholar's mate",
+  "origin": "Textbook sequence",
+  "license": "Public domain",
+  "tags": [
+   "checkmate-sequence",
+   "mate-allowed"
+  ],
+  "pgn": "[Event \"Scholar mate\"]\n[White \"W\"]\n[Black \"B\"]\n[Result \"1-0\"]\n\n1. e4 e5 2. Qh5 Nc6 3. Bc4 Nf6 4. Qxf7# 1-0"
+ },
+ {
+  "id": "fools-mate",
+  "title": "Fool's mate",
+  "origin": "Textbook sequence",
+  "license": "Public domain",
+  "tags": [
+   "checkmate-sequence",
+   "mate-allowed",
+   "eval-sign-change"
+  ],
+  "pgn": "[Event \"Fool mate\"]\n[White \"W\"]\n[Black \"B\"]\n[Result \"0-1\"]\n\n1. f3 e5 2. g4 Qh4# 0-1"
+ },
+ {
+  "id": "loyd-stalemate",
+  "title": "Sam Loyd's 10-move stalemate",
+  "origin": "Public-domain composition",
+  "license": "Public domain",
+  "tags": [
+   "draw",
+   "stalemate",
+   "forced-move"
+  ],
+  "pgn": "[Event \"Loyd stalemate\"]\n[White \"W\"]\n[Black \"B\"]\n[Result \"1/2-1/2\"]\n\n1. e3 a5 2. Qh5 Ra6 3. Qxa5 h5 4. h4 Rah6 5. Qxc7 f6 6. Qxd7+ Kf7 7. Qxb7 Qd3 8. Qxb8 Qh7 9. Qxc8 Kg6 10. Qe6 1/2-1/2"
+ },
+ {
+  "id": "synthetic-ep-castle",
+  "title": "Synthetic: en passant + castling",
+  "origin": "Written for this dataset (synthetic fixture, not a real game)",
+  "license": "CC0",
+  "tags": [
+   "en-passant",
+   "castling",
+   "synthetic"
+  ],
+  "pgn": "[Event \"Synthetic\"]\n[White \"W\"]\n[Black \"B\"]\n[Result \"*\"]\n\n1. e4 Nf6 2. e5 d5 3. exd6 exd6 4. Nf3 Be7 5. Bc4 O-O 6. O-O Nc6 7. d4 Bg4 8. h3 Bh5 9. Re1 Re8 *"
+ },
+ {
+  "id": "synthetic-promotion",
+  "title": "Synthetic: capture-promotion",
+  "origin": "Written for this dataset (synthetic fixture, not a real game)",
+  "license": "CC0",
+  "tags": [
+   "promotion",
+   "synthetic"
+  ],
+  "pgn": "[Event \"Synthetic\"]\n[White \"W\"]\n[Black \"B\"]\n[Result \"*\"]\n\n1. e4 d5 2. exd5 c6 3. dxc6 Nf6 4. cxb7 Nc6 5. bxa8=Q e5 6. Qxc6+ Bd7 7. Qc4 *"
+ },
+ {
+  "id": "cc-185958600578-from17",
+  "title": "Chess.com live game 185958600578, moves 17-19 (start position transcribed from a user screenshot)",
+  "origin": "User-supplied screenshot of a Chess.com Game Review; position transcribed by hand from the image. Only the position before 17.Bxa6 is known, not the earlier moves.",
+  "license": "User-supplied; contains only a short fragment of a game played by the user. Do not redistribute without checking Chess.com terms.",
+  "tags": [
+   "sound-sacrifice",
+   "checkmate-sequence",
+   "chesscom-reference",
+   "eval-sign-change"
+  ],
+  "pgn": "[Event \"Chess.com live\"]\n[White \"harsh12chess\"]\n[Black \"Banditoes\"]\n[Result \"1-0\"]\n[SetUp \"1\"]\n[FEN \"2kr3r/1pp1ppb1/p1n3pp/2Nq1b2/3P1B2/2PB4/PP2QPPP/R3R1K1 w - - 0 17\"]\n\n17. Bxa6 bxa6 18. Qxa6+ Kb8 19. Qb7# 1-0"
+ }
+]
