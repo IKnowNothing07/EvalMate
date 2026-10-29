@@ -15,7 +15,7 @@ import type { Classification, PositionEval, Score } from './types'
  */
 export interface Thresholds { best: number; excellent: number; good: number; inaccuracy: number; mistake: number; greatGap: number
   missPrev: number; missBefore: number; missLoss: number; missAfterMin: number; brilliantMaxBefore: number; brilliantMinAfter: number; brilliantMinDeficit: number; brilliantMaxLead: number }
-export const DEFAULT_THRESHOLDS: Thresholds = { best: 0.5, excellent: 2, good: 5, inaccuracy: 10, mistake: 20, greatGap: 15,
+export const DEFAULT_THRESHOLDS: Thresholds = { best: 0, excellent: 2, good: 5, inaccuracy: 10, mistake: 20, greatGap: 15,
   missPrev: 8, missBefore: 60, missLoss: 8, missAfterMin: 35, brilliantMaxBefore: 90, brilliantMinAfter: 40, brilliantMinDeficit: 2, brilliantMaxLead: 4 }
 export interface MoveFacts { side: 'w'|'b'; playedUci: string; isBook: boolean; isSacrifice?: boolean; materialDeficit?: number | null
   isRecapture?: boolean; onlyLegal?: boolean; prevLoss?: number; materialBefore?: number }
