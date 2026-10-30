@@ -4,7 +4,7 @@ import { classifyMove, DEFAULT_THRESHOLDS, type MoveResult } from './classify'
 import { moveAccuracy } from './accuracy'
 import { lookupOpening } from './openings'
 import { winPctFor } from './eval'
-import { materialDeficit, seeSacrifice, materialLead } from './sacrifice'
+import { materialDeficit, seeSacrifice } from './sacrifice'
 import { assignPhases, PHASES, type Phase } from './phase'
 import { estimateRating, scaledError, type RatingEstimate } from './rating'
 import type { ParsedGame } from './pgn'
@@ -49,7 +49,7 @@ export function buildReview(game: ParsedGame, evals: (PositionEval | null)[], de
     const def = book ? null : materialDeficit(game.fens[i], m.uci, a.lines[0].pv)
     // Sacrifice = either the engine line gives material up, OR the moved piece is left en prise in a net-losing exchange (see seeSacrifice).
     const isSacrifice = !book && ((def ?? 0) >= DEFAULT_THRESHOLDS.brilliantMinDeficit || seeSacrifice(game.fens[i], m.uci).sacrifice)
-    const res = classifyMove(b, a, { side: m.color, playedUci: m.uci, isBook: book, isSacrifice, materialBefore: materialLead(game.fens[i]), isRecapture, onlyLegal, prevLoss }, DEFAULT_THRESHOLDS)
+    const res = classifyMove(b, a, { side: m.color, playedUci: m.uci, isBook: book, isSacrifice, isRecapture, onlyLegal, prevLoss }, DEFAULT_THRESHOLDS)
     moves.push({ ...res, san: m.san, uci: m.uci, color: m.color, ply: i + 1, phase: phases[i], evalBefore: b.lines[0].score, evalAfter: a.lines[0].score, opening: op ?? undefined })
     counts[m.color][res.cls] = (counts[m.color][res.cls] ?? 0) + 1
     if (res.cls !== 'book') {

@@ -86,14 +86,14 @@
   "gameId": "immortal-1851",
   "ply": 43,
   "san": "Qf6+",
-  "label": "brilliant",
+  "label": "best",
   "provenance": "manually-reviewed",
-  "source": "Reviewer: the assistant. Queen sacrifice leading to forced mate (Qf6+ Nxf6 Be7#).",
+  "source": "Reviewer: the assistant. REVISED after reading Chess.com's published Brilliant rule (\"not completely winning even if you hadn't found the move\"): Stockfish (depth 12 and 16) shows Qf6+ is mate in 2 but the alternative Qxf7 also forces mate in 4, so it is not Brilliant under that rule. Originally labelled brilliant from the game's reputation.",
   "testable": true,
   "tags": [
-   "sound-sacrifice",
    "queen-sacrifice",
-   "forced-mate"
+   "forced-mate",
+   "alternative-also-winning"
   ]
  }
 ]

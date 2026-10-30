@@ -19,7 +19,7 @@ Provenance values: `chesscom-verified`, `engine-derived`, `puzzle-theme-derived`
 |---|---|---|
 | Lichess open database, puzzles, evals (database.lichess.org) | **Not reachable from the build environment (blocked), so NOT downloaded.** Importer for the puzzle CSV is implemented (`npm run dataset:puzzles -- file.csv`) and unit-tested on a synthetic fixture only. | CC0 (Lichess states its database is released under Creative Commons CC0) |
 | Lichess openings (github lichess-org/chess-openings) | used for Book detection | CC0 |
-| Chess.com classification documentation | **Not reachable, not read.** Expected-points bands in `src/dataset/reference.ts` are from memory and **unverified**. | Chess.com terms apply |
+| Chess.com classification documentation | Not reachable from the build environment, but the user supplied a screenshot/text of the "expected points" table and the Brilliant/Great/Miss rules; the classifier follows them (see `src/core/classify.ts` header). | Chess.com terms apply |
 | Stockfish | engine used: `stockfish@19.0.1` npm build (lite, single-thread WASM) | GPL-3.0 |
 | Historical games (Opera 1858, Immortal 1851, Evergreen 1852, Légal 1750, textbook mates, Loyd stalemate) | transcribed from memory; each is validated legal by chess.js and ends in the expected mate/stalemate | public domain (game moves are facts) |
 | Chess.com reference game 185958600578 | only a fragment typed from a user's screenshot (position before 17.Bxa6 + labels visible in the review). No scraping of Chess.com. | user-supplied; do not redistribute without checking Chess.com terms |
@@ -39,3 +39,5 @@ Provenance values: `chesscom-verified`, `engine-derived`, `puzzle-theme-derived`
 ## Difficult cases and known disagreements
 - **Celebrated but engine-unsound sacrifice:** Evergreen Game 17.Nf6+ is historically famous, but Stockfish (depth 12 and 16) rates it a blunder. I removed my "brilliant" manual label for it because an engine-based review (like Chess.com's) would not call it brilliant either; it stays in `games.json` as a losing-sacrifice case judged by the engine-derived reference.
 - **Used-for-calibration label:** `cc185958600578-17b-bxa6` (Chess.com: Mistake) first failed (EvalMate said Inaccuracy because the position was already ~95% lost). I added a "mate-allowed floor" rule. That makes this label calibration data, not an independent test.
+
+- **Revised manual label:** Immortal Game 22.Qf6+ was first labelled Brilliant (reputation). After reading Chess.com's rule that a Brilliant move must not leave you completely winning even without it, and seeing that Stockfish finds a second forced mate (Qxf7, M4), it is now labelled Best. The revision is based on the published rule plus engine lines, not on ChessIQ's output.

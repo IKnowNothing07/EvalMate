@@ -37,6 +37,7 @@ describe('classification', () => {
   })
   it('miss needs an opponent error that created the chance', () => {
     expect(classifyMove(pe(300), pe(100), f('w', 'h2h3', { prevLoss: 25 })).cls).toBe('miss')
+    expect(classifyMove(pe(300), pe(100), f('w', 'h2h3', { prevLoss: 9 })).cls).toBe('mistake') // opponent's move was not a real mistake (< 0.10)
     expect(classifyMove(pe(300), pe(100), f('w', 'h2h3', { prevLoss: 0 })).cls).toBe('mistake') // no opponent error => ordinary mistake
     expect(classifyMove(pe(300), pe(-600), f('w', 'h2h3', { prevLoss: 25 })).cls).toBe('blunder') // collapse is a blunder, not a miss
   })
@@ -46,15 +47,25 @@ describe('classification', () => {
   })
   it('black perspective for miss', () => expect(classifyMove(pe(-300), pe(0), f('b', 'h7h6', { prevLoss: 25 })).cls).toBe('miss'))
   it('great = only move', () => expect(classifyMove(pe(0, ['e2e4'], -400), pe(0), f('w', 'e2e4')).cls).toBe('great'))
-  it('brilliant requires sacrifice + only-move + not already winning', () => {
+  it('brilliant requires a sacrifice, near-best, and an alternative that is not already completely winning', () => {
     expect(classifyMove(pe(0, ['e2e4'], -400), pe(0), f('w', 'e2e4', { isSacrifice: true })).cls).toBe('brilliant')
-    expect(classifyMove(pe(900, ['e2e4'], 100), pe(900), f('w', 'e2e4', { isSacrifice: true, materialBefore: 6 })).cls).not.toBe('brilliant')
+    expect(classifyMove(pe(900, ['e2e4'], 100), pe(900), f('w', 'e2e4', { isSacrifice: true })).cls).toBe('brilliant') // only winning move
+    expect(classifyMove(pe(1200, ['e2e4'], 1000), pe(1200), f('w', 'e2e4', { isSacrifice: true })).cls).not.toBe('brilliant') // alternative also completely winning
     // sacrifice + best move + equal position => brilliant even without an only-move gap
     expect(classifyMove(pe(0), pe(0), f('w', 'e2e4', { isSacrifice: true })).cls).toBe('brilliant')
     // recaptures are never brilliant/great
     expect(classifyMove(pe(0, ['e2e4'], -400), pe(0), f('w', 'e2e4', { isSacrifice: true, isRecapture: true })).cls).toBe('best')
     // a sacrifice that loses the position is not brilliant
     expect(classifyMove(pe(0), pe(-500), f('w', 'h2h3', { isSacrifice: true })).cls).toBe('blunder')
+  })
+  it('nearly-best (within Excellent) sacrifice can be brilliant', () => {
+    const b: PositionEval = { fen: '', depth: 10, lines: [{ multipv: 1, score: { cp: 0 }, pv: ['e2e4'], depth: 10 }, { multipv: 2, score: { cp: -20 }, pv: ['d2d4'], depth: 10 }] }
+    expect(classifyMove(b, pe(0), f('w', 'd2d4', { isSacrifice: true })).cls).toBe('brilliant')
+    expect(classifyMove(b, pe(0), f('w', 'd2d4')).cls).toBe('excellent')
+  })
+  it('great also when the best move changes the outcome (equal -> winning) without a huge gap', () => {
+    expect(classifyMove(pe(200, ['e2e4'], 90), pe(200), f('w', 'e2e4')).cls).toBe('great')
+    expect(classifyMove(pe(100, ['e2e4'], 0), pe(100), f('w', 'e2e4')).cls).toBe('best') // same outcome state, gap < 15
   })
   it('forced single legal move is never great', () => expect(classifyMove(pe(0, ['e2e4'], -400), pe(0), f('w', 'e2e4', { onlyLegal: true })).cls).toBe('best'))
   it('non-top move within 0.5 of best only counts as best if the engine listed it', () => {
@@ -137,9 +148,9 @@ describe('static exchange sacrifice (piece left en prise)', () => {
   it('pawn moves never count', () => expect(seeSacrifice('rnbqkbnr/pppp1ppp/8/4p3/4P3/8/PPPP1PPP/RNBQKBNR w KQkq - 0 2', 'd2d4').sacrifice).toBe(false))
   it('queen thrown away for nothing counts (net loss)', () => expect(seeSacrifice('r3k3/8/8/8/8/1Q6/8/4K3 w - - 0 1', 'b3b8').sacrifice).toBe(true))
   it('material lead is from the side to move', () => { expect(materialLead('rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1')).toBe(0); expect(materialLead('4k3/8/8/8/8/8/8/Q3K3 w - - 0 1')).toBe(9); expect(materialLead('4k3/8/8/8/8/8/8/Q3K3 b - - 0 1')).toBe(-9) })
-  it('brilliant is blocked when already far ahead in material', () => {
-    const b = pe(900, ['e2e4'], 800), mk = (lead: number) => classifyMove(b, pe(900), { side: 'w', playedUci: 'e2e4', isBook: false, isSacrifice: true, materialBefore: lead }).cls
-    expect(mk(0)).toBe('brilliant'); expect(mk(6)).not.toBe('brilliant')
+  it('brilliant is blocked when the best alternative is already completely winning', () => {
+    const mk = (alt: number) => classifyMove(pe(1200, ['e2e4'], alt), pe(1200), { side: 'w', playedUci: 'e2e4', isBook: false, isSacrifice: true }).cls
+    expect(mk(100)).toBe('brilliant'); expect(mk(570)).toBe('brilliant') /* the verified Chess.com case: alternative ~+5.7 */; expect(mk(1000)).not.toBe('brilliant')
   })
 })
 

@@ -64,3 +64,11 @@ Sources actually used: public-domain historical games, a 4-label/2-aggregate Che
 Same code, second build target: `npm run build:web` writes a static site to `docs/` (`npm run build` still builds the Chrome extension to `dist/`).
 Publish: push the repo to GitHub, then Settings > Pages > Source "Deploy from a branch" > branch `main`, folder `/docs`. The site is at `https://<user>.github.io/<repo>/`.
 Notes: everything runs in the visitor's browser (Stockfish WASM in a Web Worker; no server). Saved reviews use the browser's localStorage (~5 MB, per device and per browser, not synced). The Chess.com username import calls the public api.chess.com from the page; if the browser blocks it, paste a PGN instead. Stockfish is GPL-3.0, so keep the repository public with `LICENSE` and this source. After changing code, re-run `npm run build:web` and commit `docs/`.
+
+## v0.5 — aligned with Chess.com's published classification rules
+Source: Chess.com's support article on move classifications (text/screenshot supplied by the project owner; I could not open it from the build environment).
+- **Expected-points bands** (already used): Best 0.00, Excellent <=0.02, Good <=0.05, Inaccuracy <=0.10, Mistake <=0.20, Blunder >0.20. Chess.com's curve depends on player rating; ours is a fixed curve (no rating-dependent generosity: NOT implemented).
+- **Brilliant**: best *or nearly best* (loss <= Excellent), a good piece sacrifice, not in a bad position afterwards (>= 40%), and the best *alternative* move is not already completely winning (< 95% win, about +8 pawns; or a mate the alternative does not also have). Previously: capped by the position before the move.
+- **Great**: top move that is critical: the second-best line is >= 15 win-% worse, OR the best line is in a better outcome state (losing < 35%, equal, winning > 65%) than the second-best by >= 8. Not recaptures, not forced single moves.
+- **Miss**: opponent's last move was a real mistake (>= 0.10 expected points), the best move would be winning (> 65%) or mate, and this move gave up >= 8 win-% without collapsing (collapse = Blunder).
+Tests: `npm test` (85 tests). Regression record: Chess.com-verified 2/2, manually-reviewed 7/7 (assistant, not independent); engine-derived agreement 77%.

@@ -2,8 +2,8 @@ import { winPctFor } from '../core/eval'
 import type { Classification, PositionEval } from '../core/types'
 /**
  * Engine-derived REFERENCE labels from a deeper search. Deliberately simple (no sacrifice/miss/book logic), loss-based only:
- * expected-points loss = win% lost by the mover. Thresholds are my recollection of Chess.com's published expected-points bands
- * (0.02 / 0.05 / 0.10 / 0.20); I could NOT open their documentation from this environment, so they are UNVERIFIED.
+ * expected-points loss = win% lost by the mover. Bands (0.02 / 0.05 / 0.10 / 0.20) match Chess.com's published expected-points table
+ * (checked against a screenshot of their support page supplied by the user). Their curve is rating-dependent; ours is fixed.
  * Only the six loss classes can be derived from an engine alone; Brilliant/Great/Miss/Book cannot.
  */
 export const REF_BANDS = { excellent: 2, good: 5, inaccuracy: 10, mistake: 20 }
