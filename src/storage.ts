@@ -3,7 +3,7 @@ import type { Review } from './core/review'
 const hasChromeStore = () => typeof chrome !== 'undefined' && !!chrome.storage?.local
 export const QUOTA_BYTES = hasChromeStore() ? 10 * 1024 * 1024 : 5 * 1024 * 1024
 export interface SavedReview { id: string; savedAt: number; pgn: string; white: string; black: string; result: string; review: Review }
-const KEY = 'chessiq.reviews'
+const KEY = 'evalmate.reviews'
 const hasChrome = () => typeof chrome !== 'undefined' && !!chrome.storage?.local
 export async function loadAll(): Promise<SavedReview[]> {
   try { if (hasChrome()) return ((await chrome.storage.local.get(KEY))[KEY] as SavedReview[]) ?? []

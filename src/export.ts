@@ -16,14 +16,14 @@ export function annotatedPgn(game: ParsedGame, review: Review) {
   }); void c
   return `${h}\n\n${out.trim()} ${game.result}\n`
 }
-export const reviewJson = (game: ParsedGame, review: Review) => JSON.stringify({ app: 'ChessIQ', headers: game.headers, depth: review.depth, complete: review.complete, accuracy: review.accuracy, counts: review.counts, opening: review.opening,
+export const reviewJson = (game: ParsedGame, review: Review) => JSON.stringify({ app: 'EvalMate', headers: game.headers, depth: review.depth, complete: review.complete, accuracy: review.accuracy, counts: review.counts, opening: review.opening,
   moves: review.moves.map(m => ({ ply: m.ply, san: m.san, cls: m.cls, winLoss: +m.winLoss.toFixed(2), best: m.bestUci, evalAfter: m.evalAfter })) }, null, 2)
 export function reviewHtml(game: ParsedGame, review: Review) {
   const f = (n: number | null) => n === null ? 'n/a' : n.toFixed(1)
   const rows = review.moves.map(m => `<tr><td>${Math.ceil(m.ply / 2)}${m.color === 'w' ? '.' : '...'}</td><td>${esc(m.san)}</td><td>${m.cls}</td><td>${esc(formatScore(m.evalAfter))}</td></tr>`).join('')
-  return `<!doctype html><meta charset="utf-8"><title>ChessIQ review</title><style>body{font:14px system-ui;max-width:700px;margin:2em auto}td,th{padding:2px 10px;text-align:left}</style>
+  return `<!doctype html><meta charset="utf-8"><title>EvalMate review</title><style>body{font:14px system-ui;max-width:700px;margin:2em auto}td,th{padding:2px 10px;text-align:left}</style>
 <h1>${esc(game.headers.White ?? '?')} vs ${esc(game.headers.Black ?? '?')} — ${esc(game.result)}</h1><p>${review.opening ? esc(review.opening.eco + ' ' + review.opening.name) : ''} · depth ${review.depth} · ${review.complete ? 'complete' : 'INCOMPLETE'}</p>
-<p>Accuracy (ChessIQ estimate): White ${f(review.accuracy.w)}, Black ${f(review.accuracy.b)}</p><table>${rows}</table>`
+<p>Accuracy (EvalMate estimate): White ${f(review.accuracy.w)}, Black ${f(review.accuracy.b)}</p><table>${rows}</table>`
 }
 export function download(name: string, text: string, type = 'text/plain') {
   const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([text], { type })); a.download = name; a.click(); setTimeout(() => URL.revokeObjectURL(a.href), 1000)

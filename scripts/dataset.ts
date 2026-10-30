@@ -1,4 +1,4 @@
-/* ChessIQ dataset tool.  Usage:
+/* EvalMate dataset tool.  Usage:
  *   npx tsx scripts/dataset.ts build  [--depth 12] [--ref-depth 18]      analyse dataset/games.json -> dataset/generated/analysis.json
  *   npx tsx scripts/dataset.ts import <file.pgn> [--source "..."] [--license "..."] [--depth 12] [--ref-depth 18]
  *   npx tsx scripts/dataset.ts apply-labels <labels.csv> --source "..."   (rows: gameId,ply,san,label) adds chesscom-verified labels YOU read in Chess.com

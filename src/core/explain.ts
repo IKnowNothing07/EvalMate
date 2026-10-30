@@ -44,6 +44,6 @@ export function explain(game: ParsedGame, review: Review, m: ReviewedMove): stri
     if (r.captured && V[r.captured] >= 3) out.push(`It allows the opponent to win a ${NAME[r.captured]} with ${r.san}.`) } catch { /* ignore */ } }
   const dm = material(after) - material(before); const mine = m.color === 'w' ? dm : -dm
   if (mine <= -2) out.push(`Material immediately drops by ${-mine} points for you.`)
-  if (out.length === 1) out.push('The exact tactical reason is not one ChessIQ can verify automatically; compare the engine line on the right.')
+  if (out.length === 1) out.push('The exact tactical reason is not one EvalMate can verify automatically; compare the engine line on the right.')
   return out
 }

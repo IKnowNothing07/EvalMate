@@ -40,7 +40,7 @@
     "blunder": 0
    }
   },
-  "note": "PGN not available, so ChessIQ cannot be compared yet. Also the only verified Chess.com game ratings I have (1250/1500) - useful for calibrating the rating model once the PGN is supplied."
+  "note": "PGN not available, so EvalMate cannot be compared yet. Also the only verified Chess.com game ratings I have (1250/1500) - useful for calibrating the rating model once the PGN is supplied."
  },
  {
   "id": "agg-harsh12chess-vs-banditoes",

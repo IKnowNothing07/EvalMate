@@ -3,7 +3,7 @@
  * Method: Regan & Haworth, "Intrinsic Performance Ratings" (AAAI 2011): scaled error per move
  *   e = | s(v_best) - s(v_played) |,  s(v) = sign(v) * ln(1 + |v|)  (v in pawns, mover's view),
  * restricted to positions within +-3 pawns and excluding book moves; then  IPR ~= 3571 - 15413 * mean(e).
- * Their constants were fitted to Rybka 3 at depth 13 on long human games; ChessIQ runs Stockfish (lite) at lower depth,
+ * Their constants were fitted to Rybka 3 at depth 13 on long human games; EvalMate runs Stockfish (lite) at lower depth,
  * and we have NOT calibrated against Chess.com reviews, so treat results as rough (+-300 or worse), esp. for short games.
  */
 export interface RatingEstimate { rating: number | null; ae: number | null; moves: number; reason?: string }

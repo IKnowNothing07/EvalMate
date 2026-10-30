@@ -67,14 +67,14 @@ export function App() {
   const hdr = game.headers
 
   return <div className="app">
-    <header><b className="logo">♞ ChessIQ</b>
+    <header><b className="logo">♞ EvalMate</b>
       <span className="players"><span className="chip w" />{hdr.White ?? '?'} {hdr.WhiteElo ? `(${hdr.WhiteElo})` : ''} <em>vs</em> <span className="chip b" />{hdr.Black ?? '?'} {hdr.BlackElo ? `(${hdr.BlackElo})` : ''}</span>
       <span className="meta">{game.result} · {hdr.TimeControl ?? '—'} · {review.opening ? `${review.opening.eco} ${review.opening.name}` : 'Opening not recognised'}</span>
       <span className={`status ${complete ? 'ok' : 'warn'}`}>{prog ? `Analysing ${prog[0]}/${prog[1]}` : complete ? `Complete · depth ${review.depth}` : 'INCOMPLETE — analysis was interrupted'}</span>
       {prog && <button onClick={cancel}>Cancel</button>}
       <button onClick={() => { cancel(); setGame(null); setReview(null); refresh() }}>Game list</button>
       <select aria-label="Export" value="" onChange={e => { const v = e.target.value
-        if (v === 'pgn') download('game.pgn', pgn); if (v === 'apgn') download('game-analysed.pgn', annotatedPgn(game, review)); if (v === 'json') download('review.json', reviewJson(game, review), 'application/json'); if (v === 'html') download('review.html', reviewHtml(game, review), 'text/html'); if (v === 'dataset') download('chessiq-dataset-record.json', JSON.stringify(toDatasetRecord(game, pgn, review), null, 2), 'application/json') }}>
+        if (v === 'pgn') download('game.pgn', pgn); if (v === 'apgn') download('game-analysed.pgn', annotatedPgn(game, review)); if (v === 'json') download('review.json', reviewJson(game, review), 'application/json'); if (v === 'html') download('review.html', reviewHtml(game, review), 'text/html'); if (v === 'dataset') download('evalmate-dataset-record.json', JSON.stringify(toDatasetRecord(game, pgn, review), null, 2), 'application/json') }}>
         <option value="">Export…</option><option value="pgn">Original PGN</option><option value="apgn" disabled={!review.moves.length}>Analysed PGN</option><option value="json">JSON report</option><option value="html">HTML report</option><option value="dataset">Dataset record (JSON)</option></select>
     </header>
     {err && <div className="err" role="alert">{err}</div>}
@@ -144,7 +144,7 @@ function Report({ game, review }: { game: ParsedGame; review: Review }) {
   return <div className="report">
     {!f && <p className="warn">Analysis is incomplete, so this report covers only analysed moves.</p>}
     <h3>Result: {game.result} · {review.opening ? `${review.opening.eco} ${review.opening.name}` : 'Opening not recognised'}</h3>
-    <p className="note">Accuracy is ChessIQ's own estimate and will differ from Chess.com's.</p>
+    <p className="note">Accuracy is EvalMate's own estimate and will differ from Chess.com's.</p>
     <Summary review={review} hdr={game.headers} />
     <h4>Turning points</h4>{swings.length ? <ul>{swings.map(m => <li key={m.ply}>Move {Math.ceil(m.ply / 2)} {m.san} ({m.cls}, {m.winLoss.toFixed(0)} win-% lost)</li>)}</ul> : <p>No large swings found.</p>}
     <h4>Highlights</h4><p>Best decision: {bestMove ? `${bestMove.san} (${bestMove.cls})` : 'no brilliant/great move detected'}. Biggest missed win: {miss ? `${miss.san} at move ${Math.ceil(miss.ply / 2)}` : 'none detected'}.</p>
@@ -171,7 +171,7 @@ function Import({ err, setErr, start, saved, refresh, depthKey, setDepthKey, ope
   const n = saved.length, wdl = { w: 0, d: 0, l: 0 }
   saved.forEach(s => { const me = user.trim().toLowerCase(); void me; if (s.result === '1/2-1/2') wdl.d++; else if (s.result === '1-0') wdl.w++; else if (s.result === '0-1') wdl.l++ })
   const accs = saved.map(s => s.review.accuracy.w).filter((x): x is number => x !== null)
-  return <div className="app import"><header><b className="logo">♞ ChessIQ</b><span className="meta">Local Stockfish game review — nothing is uploaded.</span></header>
+  return <div className="app import"><header><b className="logo">♞ EvalMate</b><span className="meta">Local Stockfish game review — nothing is uploaded.</span></header>
     {err && <div className="err" role="alert">{err}</div>}
     <div className="grid">
       <section><h3>Import from Chess.com</h3><p className="note">Uses Chess.com's public game archive for a username (latest month). Only completed games.</p>

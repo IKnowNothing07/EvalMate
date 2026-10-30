@@ -1,4 +1,4 @@
-/** Per-move accuracy from win% lost (Lichess-style exponential fit). ChessIQ's own estimate; differs from Chess.com. */
+/** Per-move accuracy from win% lost (Lichess-style exponential fit). EvalMate's own estimate; differs from Chess.com. */
 export function moveAccuracy(winLoss: number) {
   if (!Number.isFinite(winLoss)) return 0
   return Math.max(0, Math.min(100, 103.1668 * Math.exp(-0.04354 * Math.max(0, winLoss)) - 3.1669))

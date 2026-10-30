@@ -1,4 +1,4 @@
-# ChessIQ move-classification dataset
+# EvalMate move-classification dataset
 
 Purpose: **test and calibrate our own classifier**. It is NOT a copy of Chess.com's private rules, and nothing here lets us claim parity with Chess.com.
 
@@ -31,11 +31,11 @@ Provenance values: `chesscom-verified`, `engine-derived`, `puzzle-theme-derived`
 - `engine-derived`: only the six loss classes (best, excellent, good, inaccuracy, mistake, blunder) can be derived from an engine. Brilliant, Great, Miss and Book cannot.
 
 ## Workflow to extend it (the way to get real calibration)
-1. In ChessIQ open a game, **Export > Dataset record (JSON)** (or run `npm run dataset:import -- game.pgn --source "..." --license "..."`).
+1. In EvalMate open a game, **Export > Dataset record (JSON)** (or run `npm run dataset:import -- game.pgn --source "..." --license "..."`).
 2. Open the same game in Chess.com Game Review. In `dataset/imported/labels-template.csv` fill `chesscom_label` for the moves where you can read the label (blank = unknown).
 3. `npx tsx scripts/dataset.ts apply-labels dataset/imported/labels-template.csv --source "Chess.com Game Review, <url>"`
 4. `npm run dataset:report`. A class is only called `reliable` with >= 30 labelled examples and F1 >= 0.8; otherwise `unreliable` or `insufficient-evidence`.
 
 ## Difficult cases and known disagreements
 - **Celebrated but engine-unsound sacrifice:** Evergreen Game 17.Nf6+ is historically famous, but Stockfish (depth 12 and 16) rates it a blunder. I removed my "brilliant" manual label for it because an engine-based review (like Chess.com's) would not call it brilliant either; it stays in `games.json` as a losing-sacrifice case judged by the engine-derived reference.
-- **Used-for-calibration label:** `cc185958600578-17b-bxa6` (Chess.com: Mistake) first failed (ChessIQ said Inaccuracy because the position was already ~95% lost). I added a "mate-allowed floor" rule. That makes this label calibration data, not an independent test.
+- **Used-for-calibration label:** `cc185958600578-17b-bxa6` (Chess.com: Mistake) first failed (EvalMate said Inaccuracy because the position was already ~95% lost). I added a "mate-allowed floor" rule. That makes this label calibration data, not an independent test.

@@ -1,4 +1,4 @@
-# EvalMate — AI Chess Game Review (v0.2)
+# EvalMate — Chess Game Review (v0.2)
 Local Stockfish game review as a Manifest V3 Chrome extension. Nothing is uploaded; no telemetry; no API keys.
 
 ## Setup (Windows PowerShell)
@@ -7,7 +7,7 @@ Local Stockfish game review as a Manifest V3 Chrome extension. Nothing is upload
 3. `npm test`   (unit tests + real-Stockfish tests)
 4. `npm run build`   (type-checks, then builds to `dist/`)
 5. Chrome → `chrome://extensions` → enable **Developer mode** → **Load unpacked** → choose the `dist` folder.
-6. Click the ChessIQ toolbar icon → **Open ChessIQ**.
+6. Click the EvalMate toolbar icon → **Open EvalMate**.
 
 ## Usage
 - **Chess.com:** type your username → *Find games* (latest month, public archive) → click a game. Or finish a game, copy its PGN from Chess.com's share/download dialog, paste it (or upload a `.pgn`) and press **Review Game**.
@@ -20,10 +20,10 @@ Local Stockfish game review as a Manifest V3 Chrome extension. Nothing is upload
 - CSP `wasm-unsafe-eval` — required to run Stockfish WebAssembly. No content script and no `tabs` permission are used.
 
 ## Algorithms
-Evals are stored from White's perspective; converted to win% (logistic, `50+50*(2/(1+e^(-0.00368208cp))-1)`) and compared from the mover's side. Win-% lost: ≤0.5 Best, ≤2 Excellent, ≤5 Good, ≤10 Inaccuracy, ≤20 Mistake, else Blunder; Miss = lost a ≥85% position without falling below 40%. Great = only good move (second line ≥15 win-% worse). Brilliant = rare: engine-best sacrifice of a ≥3-point piece in a not-already-winning position. Book = position in the Lichess opening DB. Accuracy = mean of `103.17·e^(−0.04354·loss) − 3.17` (book moves excluded). All thresholds: `src/core/classify.ts`. Accuracy is ChessIQ's estimate, not Chess.com's.
+Evals are stored from White's perspective; converted to win% (logistic, `50+50*(2/(1+e^(-0.00368208cp))-1)`) and compared from the mover's side. Win-% lost: ≤0.5 Best, ≤2 Excellent, ≤5 Good, ≤10 Inaccuracy, ≤20 Mistake, else Blunder; Miss = lost a ≥85% position without falling below 40%. Great = only good move (second line ≥15 win-% worse). Brilliant = rare: engine-best sacrifice of a ≥3-point piece in a not-already-winning position. Book = position in the Lichess opening DB. Accuracy = mean of `103.17·e^(−0.04354·loss) − 3.17` (book moves excluded). All thresholds: `src/core/classify.ts`. Accuracy is EvalMate's estimate, not Chess.com's.
 
 ## Third-party notices
-- **Stockfish 19** (GPL-3.0) — `public/engine/`, from npm `stockfish@19.0.1`; license `STOCKFISH-COPYING.txt`. Source: https://github.com/official-stockfish/Stockfish and https://github.com/nmrugg/stockfish.js . Because Stockfish is GPL-3.0, distribute ChessIQ under GPL-3.0-compatible terms with this source.
+- **Stockfish 19** (GPL-3.0) — `public/engine/`, from npm `stockfish@19.0.1`; license `STOCKFISH-COPYING.txt`. Source: https://github.com/official-stockfish/Stockfish and https://github.com/nmrugg/stockfish.js . Because Stockfish is GPL-3.0, distribute EvalMate under GPL-3.0-compatible terms with this source.
 - **Opening data** — lichess-org/chess-openings (CC0). Regenerate: `npm run build:openings`.
 - **Chess pieces** — "cburnett" set by Colin M.L. Burnett via lichess-org/lila (GPLv2+), in `src/assets/pieces/`. Not Chess.com artwork.
 - chess.js (BSD-2), React (MIT), Vite (MIT).
@@ -48,13 +48,13 @@ Not implemented / limits: no content script — pulling the game from the open C
 - *Miss*: the opponent's previous move lost >= 8 win-%, you had >= 60% (or a forced mate) and your move gave up >= 8 win-% without collapsing (>= 35%). Collapses are Blunders; ordinary errors without an opponent error are Inaccuracy/Mistake.
 - *Book*: position is in the Lichess opening DB (CC0), stays book only while you stay in theory (re-entry by transposition only in the first 12 plies); a checkmating move is never Book. Book moves are excluded from accuracy and rating.
 **Phases** (src/core/phase.ts, Lichess-Divider-style): endgame <= 6 minor/major pieces; middlegame <= 10 pieces or either back rank has < 4 pieces; else opening; phases only move forward; each move takes the phase of the position before it. Per-phase accuracy needs >= 3 analysed non-book moves, otherwise "—". The phase icon comes from the phase's average win-% loss.
-**Accuracy**: mean of 103.17*exp(-0.04354*loss)-3.17 per move (Lichess-style fit). ChessIQ's estimate, not Chess.com's.
+**Accuracy**: mean of 103.17*exp(-0.04354*loss)-3.17 per move (Lichess-style fit). EvalMate's estimate, not Chess.com's.
 **Estimated game rating** (src/core/rating.ts): Regan & Haworth intrinsic-performance model, IPR ~= 3571 - 15413 * mean scaled error, using only non-book moves in positions within +-3 pawns, needing >= 8 such moves, rounded to 50. Shown as n/a (with the reason on hover) if too few moves or if the result is outside 400-3000. Limitations: constants were fitted for another engine/depth, it is NOT calibrated against Chess.com's game ratings (their formula isn't public), decisive one-sided games often yield n/a, and short games are noisy (the same game can differ by hundreds of points between depths). Treat it as rough.
 **Calibration data wanted:** to calibrate, supply PGNs together with the Chess.com game ratings/classifications shown for them; the model can then be fitted and checked.
 **Tests:** `npm test` (44 tests incl. real-Stockfish validation on the Opera Game, an en-passant/castling game and Fool's mate).
 
 **Reference game (regression test).** The position before 17.Bxa6 from a real Chess.com review (marked Brilliant there) is in tests/validate.test.ts and must stay Brilliant.
-**Known differences from Chess.com:** their win-probability curve depends on player rating (flatter for ~1000-rated players) and they use a stronger engine, so ChessIQ tends to show more Inaccuracies and more "Best" (vs "Excellent") than Chess.com on low-rated games, and gives a different accuracy number.
+**Known differences from Chess.com:** their win-probability curve depends on player rating (flatter for ~1000-rated players) and they use a stronger engine, so EvalMate tends to show more Inaccuracies and more "Best" (vs "Excellent") than Chess.com on low-rated games, and gives a different accuracy number.
 
 ## v0.4 — regression dataset (see dataset/README.md)
 `npm run dataset:report` (metrics), `npm run dataset:build` (re-analyse with real Stockfish), `npm run dataset:import -- file.pgn --source "..." --license "..."`, `npm run dataset:puzzles -- lichess_db_puzzle.csv`, and in the app **Export > Dataset record (JSON)**. `npm test` = 83 tests (the dataset tests run offline from stored Stockfish evals, so they are deterministic).

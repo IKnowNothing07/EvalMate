@@ -22,7 +22,7 @@ describe('dataset integrity', () => {
     expect(aggs.every(a => a.provenance === 'chesscom-verified')).toBe(true)
     expect([...verified, ...manual].every(l => PROVENANCE.includes(l.provenance)))
   })
-  it('never stores our classifier output as a label', () => { for (const l of [...verified, ...manual]) expect(l.source).not.toMatch(/classifier|ChessIQ predicted/i) })
+  it('never stores our classifier output as a label', () => { for (const l of [...verified, ...manual]) expect(l.source).not.toMatch(/classifier|EvalMate predicted/i) })
   it('untestable verified labels explain what is missing', () => verified.filter(l => !l.testable).forEach(l => expect(l.missing).toBeTruthy()))
   it('analysis was produced with real engine settings', () => { expect(analysis.engine).toMatch(/stockfish/); expect(analysis.refDepth).toBeGreaterThan(analysis.testDepth) })
   it('catches a stale analysis (FEN mismatch)', () => {

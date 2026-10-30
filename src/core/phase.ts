@@ -2,7 +2,7 @@ import { Chess } from 'chess.js'
 export type Phase = 'opening' | 'middlegame' | 'endgame'
 export const PHASES: Phase[] = ['opening', 'middlegame', 'endgame']
 /**
- * Phase rules (position-based, modelled on the Lichess "Divider"; thresholds are ChessIQ's):
+ * Phase rules (position-based, modelled on the Lichess "Divider"; thresholds are EvalMate's):
  *  - Endgame:    <= 6 minor/major pieces left (both sides combined).
  *  - Middlegame: <= 10 minor/major pieces, OR either side has fewer than 4 pieces left on its back rank (development done).
  *  - Opening:    otherwise.

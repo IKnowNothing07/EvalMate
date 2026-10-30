@@ -23,6 +23,6 @@ export function Summary({ review, hdr }: { review: Review; hdr: Record<string, s
       {(['w', 'b'] as const).map((s, i) => { const st = review.phases[s][p]
         return <span key={s} className={`ph ${i ? 'r' : ''}`} style={{ gridColumn: i ? 4 : 2 }} title={st.n === 0 ? 'No moves in this phase' : st.accuracy === null ? `Only ${st.n} analysed move(s): too few for a score` : `${st.n} moves`}>
           {st.indicator ? <ClassIcon cls={st.indicator} size={18} title={`${PHASE_NAME[p]}: ${CLS_NAME[st.indicator]}`} /> : null}<b>{f1(st.accuracy)}</b></span> })}</div>)}
-    <p className="note">Accuracy and ratings are ChessIQ estimates; they will differ from Chess.com's. Book moves are excluded.</p>
+    <p className="note">Accuracy and ratings are EvalMate estimates; they will differ from Chess.com's. Book moves are excluded.</p>
   </details>
 }

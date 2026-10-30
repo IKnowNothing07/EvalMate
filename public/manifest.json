@@ -1,9 +1,9 @@
 {
   "manifest_version": 3,
-  "name": "ChessIQ — AI Chess Game Review",
+  "name": "EvalMate — Chess Game Review",
   "version": "0.2.0",
   "description": "Local, Stockfish-powered review of completed chess games. Runs entirely on your device.",
-  "action": { "default_popup": "popup.html", "default_title": "ChessIQ" },
+  "action": { "default_popup": "popup.html", "default_title": "EvalMate" },
   "permissions": ["storage"],
   "host_permissions": ["https://api.chess.com/*"],
   "content_security_policy": { "extension_pages": "script-src 'self' 'wasm-unsafe-eval'; object-src 'self'" }
