@@ -19,7 +19,7 @@ main{display:grid;grid-template-columns:minmax(340px,600px) minmax(240px,1fr) mi
 .arrow{position:absolute;inset:0;pointer-events:none}.promo{position:absolute;inset:0;background:rgba(0,0,0,.6);display:flex;gap:10px;align-items:center;justify-content:center}.promo button{font-size:44px;background:#eee;color:#111}
 .badge{position:absolute;inset:auto 0 45% 0;margin:auto;width:max-content;background:#000b;padding:6px 14px;border-radius:6px}
 .ctl{display:flex;gap:6px;margin:10px 0;flex-wrap:wrap}.cur{color:var(--mut)}.var{background:#2c3a2a;padding:6px 10px;border-radius:6px;margin-bottom:8px}
-.graph{position:relative;margin-bottom:10px}.graph svg{width:100%;height:110px;display:block;cursor:crosshair;border-radius:4px}.tip{position:absolute;top:-24px;right:0;background:#000c;padding:2px 8px;border-radius:4px;font-size:12px}
+.graph{position:relative;margin-bottom:10px;min-width:0;width:100%}.col-moves,.col-info{min-width:0}.graph svg{display:block;width:100%;max-width:100%;cursor:crosshair;touch-action:pan-y;user-select:none}.tip{position:absolute;top:-26px;white-space:nowrap;z-index:5;pointer-events:none;background:#000c;padding:2px 8px;border-radius:4px;font-size:12px}
 .filters{display:flex;gap:4px;flex-wrap:wrap;margin-bottom:8px}.filters button{padding:3px 8px;font-size:12px}
 .moves{list-style:none;margin:0;padding:0;max-height:430px;overflow:auto;display:grid;grid-template-columns:1fr 1fr;gap:2px}.moves .empty{grid-column:1/-1;color:var(--mut)}
 .mv{width:100%;text-align:left;background:transparent;border:1px solid transparent;display:flex;gap:6px;align-items:center}.mv.cur{background:#46423d;border-color:var(--ok)}.mv .n{color:var(--mut);min-width:26px}.mv small{margin-left:auto;color:var(--mut)}

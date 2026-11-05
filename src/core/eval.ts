@@ -11,6 +11,13 @@ export function parseInfo(line: string, turn: 'w'|'b'): EngineLine | null {
   return { multipv: g('multipv') ?? 1, score, depth: g('depth') ?? 0, nodes: g('nodes'), nps: g('nps'),
     pv: line.split(' pv ')[1].trim().split(/\s+/) }
 }
+/**
+ * VISUAL scale for the evaluation GRAPH only (never used for classification, accuracy or numbers shown to the user).
+ * Chess.com's displayed evals for the same positions were ~0.6x ours (e.g. +4.99 vs +7.89, 6.6 vs 11.3, 7.0 vs 11.0), so the same
+ * win-% curve is applied to cp*0.6 to get a comparably calm graph. Set to 1 to restore the steeper original look.
+ */
+export const GRAPH_CP_SCALE = 0.6
+export const graphLevel = (cp: number) => winPct(cp * GRAPH_CP_SCALE)
 /** Win probability (0-100) for White from centipawns (Lichess logistic fit). */
 export function winPct(cp: number) { return 50 + 50 * (2 / (1 + Math.exp(-0.00368208 * Math.max(-MATE_CP, Math.min(MATE_CP, cp)))) - 1) }
 /** Win% for the given side. */
