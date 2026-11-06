@@ -7,6 +7,7 @@ export class Engine {
   private cur: { turn: 'w'|'b'; lines: Map<number, EngineLine>; resolve: (l: EngineLine[]) => void; reject: (e: Error) => void } | null = null
   private waiters: [string, () => void][] = []
   private cache = new Map<string, PositionEval>()
+  private draining: Promise<void> | null = null // after stop(): wait for Stockfish to flush its late 'bestmove' before the next search
   constructor(private t: Transport) {
     t.onLine(l => this.handle(l.trim()))
     t.onError(e => { this.cur?.reject(e); this.cur = null })
@@ -24,7 +25,10 @@ export class Engine {
     const r = this.wait('readyok'); this.t.post('isready'); await r
   }
   /** Analyse one FEN to a fixed depth. Cached by fen+depth. Rejects on cancel/timeout/error. */
+  /** Resolves when Stockfish has processed every command sent so far (isready/readyok handshake). */
+  async sync(ms = 15000) { const r = this.wait('readyok', ms); this.t.post('isready'); await r }
   async analyze(fen: string, depth: number, timeoutMs = 60000): Promise<PositionEval> {
+    if (this.draining) { await this.draining; this.draining = null }
     const key = fen + '|' + depth, hit = this.cache.get(key); if (hit) return hit
     if (this.cur) throw new Error('Engine busy')
     const turn = fen.split(' ')[1] as 'w'|'b'
@@ -36,8 +40,8 @@ export class Engine {
     if (!lines.length) throw new Error('Engine returned no analysis for ' + fen)
     const r = { fen, lines, depth: lines[0].depth }; this.cache.set(key, r); return r
   }
-  stop() { if (this.cur) { this.t.post('stop'); const c = this.cur; this.cur = null; c.reject(new AnalysisCancelled('cancelled')) } }
-  destroy() { this.stop(); this.t.terminate() }
+  stop() { if (this.cur) { this.t.post('stop'); const c = this.cur; this.cur = null; this.draining = this.sync().catch(() => {}); c.reject(new AnalysisCancelled('cancelled')) } }
+  destroy() { if (this.cur) { this.t.post('stop'); const c = this.cur; this.cur = null; c.reject(new AnalysisCancelled('cancelled')) } this.t.terminate() }
 }
 export function workerTransport(url: string): Transport {
   const w = new Worker(url); let lcb = (_: string) => {}, ecb = (_: Error) => {}

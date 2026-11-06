@@ -9,9 +9,9 @@ const URLS = import.meta.glob('../assets/pieces/*.svg', { eager: true, query: '?
 const piece = (color: string, type: string) => URLS[`../assets/pieces/${color}${type.toUpperCase()}.svg`]
 export interface Props { fen: string; flipped: boolean; last?: [string, string] | null; arrow?: [string, string] | null; badge?: { sq: string; cls: Classification } | null; onMove: (from: string, to: string, promotion?: string) => void }
 
-export function EvalBar({ score, flipped }: { score?: Score; flipped: boolean }) {
+export function EvalBar({ score, flipped, pending }: { score?: Score; flipped: boolean; pending?: boolean }) {
   const w = score ? winPct(score.cp) : 50, whiteAhead = w >= 50
-  return <div className={`evalbar ${flipped ? 'flip' : ''}`} role="img" aria-label={score ? `Evaluation ${formatScore(score)}` : 'No evaluation yet'}>
+  return <div className={`evalbar ${flipped ? 'flip' : ''} ${pending ? 'pending' : ''}`} role="img" aria-label={score ? `Evaluation ${formatScore(score)}` : 'No evaluation yet'}>
     <div className="ebw" style={{ height: `${w}%` }} />
     <span className={`ebl ${whiteAhead ? 'wa' : 'ba'}`}>{score ? formatScore(score).replace('+', '') : ''}</span></div>
 }

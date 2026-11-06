@@ -4,6 +4,11 @@ import { Board, EvalBar } from './Board'
 import { Graph } from './Graph'
 import { ClassIcon, CLS_NAME } from './ClassIcon'
 import { Summary } from './Summary'
+import { AnalysisService } from '../core/analysis'
+import { emptyVars, addMove, stepBack, stepForward, anchorOf, labelOf, removeSubtree, count as varCount, type VarState, type Loc } from '../core/variations'
+import { lookupOpening } from '../core/openings'
+import { winPctFor } from '../core/eval'
+import type { Score, PositionEval } from '../core/types'
 import { Engine, workerTransport, AnalysisCancelled } from '../core/engine'
 import { parsePgn, PgnError, type ParsedGame } from '../core/pgn'
 import { buildReview, runReview, terminalEval, DEPTHS, type Review, type ReviewedMove } from '../core/review'
@@ -20,24 +25,39 @@ const fmt = (n: number | null) => (n === null ? '—' : n.toFixed(1))
 export function App() {
   const [game, setGame] = useState<ParsedGame | null>(null); const [pgn, setPgn] = useState(''); const [review, setReview] = useState<Review | null>(null)
   const [err, setErr] = useState(''); const [prog, setProg] = useState<[number, number] | null>(null); const [saved, setSaved] = useState<SavedReview[]>([])
-  const [ply, setPly] = useState(0); const [flip, setFlip] = useState(false); const [sandbox, setSandbox] = useState<{ fen: string; sans: string[]; last: [string, string] } | null>(null)
+  const [ply, setPly] = useState(0); const [flip, setFlip] = useState(false); const [vars, setVars] = useState<VarState>(emptyVars()); const [varId, setVarId] = useState<string | null>(null); const [showBook, setShowBook] = useState(false)
   const [depthKey, setDepthKey] = useState<keyof typeof DEPTHS>('standard'); const [filter, setFilter] = useState<string>('all'); const [tab, setTab] = useState<'analysis' | 'report'>('analysis')
   const [playing, setPlaying] = useState(false); const abort = useRef<AbortController | null>(null); const engineRef = useRef<Engine | null>(null)
+  const svcRef = useRef<AnalysisService | null>(null), navRef = useRef({ back: () => {}, fwd: () => {} }), lastBar = useRef<Score | undefined>(undefined)
+  const [svcReady, setSvcReady] = useState(0), [, bump] = useState(0)
+  const node = varId ? vars.nodes[varId] ?? null : null
   const refresh = () => loadAll().then(setSaved)
   useEffect(() => { refresh() }, [])
+  // One lazily-started engine for exploring variations. Main-line evals are seeded into its cache (never recomputed, never modified).
+  useEffect(() => {
+    if (!game || !review || prog) return
+    const svc = new AnalysisService(async () => { const e = new Engine(workerTransport(engineUrl())); await e.init(2); return e }, review.evals, Math.max(10, review.depth))
+    svcRef.current = svc; setSvcReady(x => x + 1)
+    return () => { svc.dispose(); if (svcRef.current === svc) svcRef.current = null }
+  }, [game, review?.complete, prog === null])
+  useEffect(() => {
+    const svc = svcRef.current; if (!node || !svc || svc.get(node.fen)) return
+    let alive = true; svc.request(node.fen).then(ev => { if (alive) bump(x => x + 1); void ev })
+    return () => { alive = false }
+  }, [node?.fen, svcReady])
   useEffect(() => { if (!playing || !game) return; const t = setInterval(() => setPly(p => { if (p >= game.fens.length - 1) { setPlaying(false); return p } return p + 1 }), 900); return () => clearInterval(t) }, [playing, game])
   useEffect(() => {
     if (!game) return
     const h = (e: KeyboardEvent) => { if ((e.target as HTMLElement).tagName === 'TEXTAREA' || (e.target as HTMLElement).tagName === 'INPUT') return
-      if (e.key === 'ArrowLeft') go(ply - 1); if (e.key === 'ArrowRight') go(ply + 1); if (e.key === 'Home') go(0); if (e.key === 'End') go(game.fens.length - 1) }
+      if (e.key === 'ArrowLeft') navRef.current.back(); if (e.key === 'ArrowRight') navRef.current.fwd(); if (e.key === 'Home') go(0); if (e.key === 'End') go(game.fens.length - 1) }
     window.addEventListener('keydown', h); return () => window.removeEventListener('keydown', h)
   })
-  const go = (p: number) => { if (!game) return; setSandbox(null); setPly(Math.max(0, Math.min(game.fens.length - 1, p))) }
+  const go = (p: number) => { if (!game) return; setVarId(null); setPly(Math.max(0, Math.min(game.fens.length - 1, p))) }
 
   async function start(text: string) {
     setErr('')
     let g: ParsedGame; try { g = parsePgn(text) } catch (e) { setErr(e instanceof PgnError ? e.message : 'Could not read PGN'); return }
-    setGame(g); setPgn(text); setPly(0); setSandbox(null); setTab('analysis'); setReview(buildReview(g, g.fens.map(f => terminalEval(f)), 0))
+    setGame(g); setPgn(text); setPly(0); setVars(emptyVars()); setVarId(null); setTab('analysis'); setReview(buildReview(g, g.fens.map(f => terminalEval(f)), 0))
     const engine = new Engine(workerTransport(engineUrl())); engineRef.current = engine; abort.current = new AbortController()
     const depth = DEPTHS[depthKey]
     try {
@@ -50,19 +70,31 @@ export function App() {
   }
   const cancel = () => { abort.current?.abort(); engineRef.current?.stop() }
 
-  if (!game || !review) return <Import {...{ err, setErr, start, saved, refresh, depthKey, setDepthKey, open: (s: SavedReview) => { const g = parsePgn(s.pgn); setGame(g); setPgn(s.pgn); setReview(buildReview(g, s.review.evals, s.review.depth)); setPly(0) } }} />
+  if (!game || !review) return <Import {...{ err, setErr, start, saved, refresh, depthKey, setDepthKey, open: (s: SavedReview) => { const g = parsePgn(s.pgn); setGame(g); setPgn(s.pgn); setReview(buildReview(g, s.review.evals, s.review.depth)); setPly(0); setVars(emptyVars()); setVarId(null) } }} />
 
   const complete = review.complete, N = game.fens.length
   const curMove = ply > 0 ? review.moves.find(m => m.ply === ply) : undefined
-  const fen = sandbox ? sandbox.fen : game.fens[ply]
-  const prevEval = review.evals[ply]?.lines[0]
-  const last: [string, string] | null = sandbox ? sandbox.last : ply > 0 ? [game.moves[ply - 1].uci.slice(0, 2), game.moves[ply - 1].uci.slice(2, 4)] : null
-  const bestArrow = !sandbox && prevEval?.pv[0] ? ([prevEval.pv[0].slice(0, 2), prevEval.pv[0].slice(2, 4)] as [string, string]) : null
+  const svc = svcRef.current
+  const fen = node ? node.fen : game.fens[ply]
+  const posEval = node ? svc?.get(node.fen) : review.evals[ply] ?? undefined   // evaluation of the DISPLAYED position (game or variation)
+  const prevEval = posEval?.lines[0]
+  const last: [string, string] | null = node ? [node.uci.slice(0, 2), node.uci.slice(2, 4)] : ply > 0 ? [game.moves[ply - 1].uci.slice(0, 2), game.moves[ply - 1].uci.slice(2, 4)] : null
+  const bestArrow = prevEval?.pv[0] ? ([prevEval.pv[0].slice(0, 2), prevEval.pv[0].slice(2, 4)] as [string, string]) : null
+  if (posEval) lastBar.current = posEval.lines[0].score
+  const barPending = !!node && !posEval
+  let lastBook = 0; for (const m of review.moves) { if (m.cls === 'book' && m.ply === lastBook + 1) lastBook = m.ply; else break }
   const bad = review.moves.filter(m => BAD.includes(m.cls)).map(m => m.ply)
   const jump = (dir: 1 | -1) => { const t = dir === 1 ? bad.find(p => p > ply) : [...bad].reverse().find(p => p < ply); if (t) go(t) }
+  const curLoc: Loc = node ? { kind: 'var', id: node.id } : { kind: 'main', ply }
+  const applyLoc = (st: VarState, l: Loc) => { if (l.kind === 'main') { setVarId(null); setPly(l.ply) } else { setVarId(l.id); setPly(anchorOf(st, l)) } }
+  navRef.current = { back: () => applyLoc(vars, stepBack(vars, curLoc)), fwd: () => applyLoc(vars, stepForward(vars, game, curLoc)) }
+  // The original game is never modified: a move either follows the game, reuses a variation node, or creates a new node in `vars`.
   const onMove = (from: string, to: string, promotion?: string) => {
-    const c = new Chess(fen); try { const m = c.move({ from, to, promotion }); setSandbox({ fen: c.fen(), sans: [...(sandbox?.sans ?? []), m.san], last: [from, to] }) } catch { /* illegal */ }
+    const r = addMove(vars, game, curLoc, from, to, promotion); if (!r) return
+    setVars(r.state); applyLoc(r.state, r.loc)
   }
+  const playUci = (u: string) => onMove(u.slice(0, 2), u.slice(2, 4), u[4])
+  const pathLabels = (() => { const out: string[] = []; let i = node?.id ?? null; while (i) { out.unshift(labelOf(vars, i)); i = vars.nodes[i].parent } return out })()
   const shown = review.moves.filter(m => filter === 'all' || (filter === 'bad' ? BAD.includes(m.cls) : m.cls === filter))
   const hdr = game.headers
 
@@ -81,46 +113,72 @@ export function App() {
     <nav className="tabs"><button className={tab === 'analysis' ? 'on' : ''} onClick={() => setTab('analysis')}>Analysis</button><button className={tab === 'report' ? 'on' : ''} onClick={() => setTab('report')}>Report</button></nav>
     {tab === 'report' ? <Report {...{ game, review }} /> : <main>
       <section className="col-board">
-        <div className="board-row"><EvalBar score={review.evals[ply]?.lines[0].score} flipped={flip} />
+        <div className="board-row"><EvalBar score={posEval?.lines[0].score ?? (node ? lastBar.current : undefined)} flipped={flip} pending={barPending} />
           <div className="bcol"><PlayerBar hdr={hdr} color={flip ? 'w' : 'b'} />
-            <Board fen={fen} flipped={flip} last={last} arrow={bestArrow} badge={curMove && !sandbox ? { sq: game.moves[ply - 1].uci.slice(2, 4), cls: curMove.cls } : null} onMove={onMove} />
+            <Board fen={fen} flipped={flip} last={last} arrow={bestArrow} badge={curMove && !node ? { sq: game.moves[ply - 1].uci.slice(2, 4), cls: curMove.cls } : null} onMove={onMove} />
             <PlayerBar hdr={hdr} color={flip ? 'b' : 'w'} /></div></div>
-        <div className="ctl"><button onClick={() => go(0)} aria-label="First">⏮</button><button onClick={() => go(ply - 1)} aria-label="Previous">◀</button>
-          <button onClick={() => setPlaying(!playing)} aria-label="Play/pause">{playing ? '⏸' : '▶'}</button><button onClick={() => go(ply + 1)} aria-label="Next">▶▶</button>
+        <div className="ctl"><button onClick={() => go(0)} aria-label="First">⏮</button><button onClick={() => navRef.current.back()} aria-label="Previous">◀</button>
+          <button onClick={() => { setVarId(null); setPlaying(!playing) }} aria-label="Play/pause">{playing ? '⏸' : '▶'}</button><button onClick={() => navRef.current.fwd()} aria-label="Next">▶▶</button>
           <button onClick={() => go(N - 1)} aria-label="Last">⏭</button><button onClick={() => setFlip(!flip)}>Flip</button></div>
-        {sandbox && <div className="var">Exploring a variation (not saved): <b>{sandbox.sans.join(' ')}</b> <button onClick={() => setSandbox(null)}>Back to game</button> <button onClick={() => setSandbox({ ...sandbox, fen: game.fens[ply], sans: [], last: last ?? ['', ''] }) }>Reset</button></div>}
-        <div className="cur">{ply === 0 ? 'Start position' : `Move ${Math.ceil(ply / 2)}${game.moves[ply - 1].color === 'w' ? '.' : '...'} ${game.moves[ply - 1].san}`}</div>
+        {node && <div className="var">Exploring a variation. The game and its graph are unchanged. <b>{pathLabels.join(' ')}</b> <button onClick={() => { setVarId(null) }}>Back to game</button></div>}
+        <div className="cur">{node ? `Variation from move ${anchorOf(vars, curLoc)}` : ply === 0 ? 'Start position' : `Move ${Math.ceil(ply / 2)}${game.moves[ply - 1].color === 'w' ? '.' : '...'} ${game.moves[ply - 1].san}`}</div>
       </section>
       <section className="col-moves">
         <Graph {...{ review, game, ply, onSelect: go }} />
         <div className="filters">{[['all', 'All'], ['bad', 'Errors'], ['blunder', 'Blunders'], ['mistake', 'Mistakes'], ['inaccuracy', 'Inaccuracies'], ['miss', 'Misses']].map(([k, l]) => <button key={k} className={filter === k ? 'on' : ''} onClick={() => setFilter(k)}>{l}</button>)}</div>
-        <ol className="moves">{shown.map(m => <li key={m.ply}><button className={`mv ${m.cls} ${m.ply === ply && !sandbox ? 'cur' : ''}`} onClick={() => go(m.ply)}>
+        <ol className="moves">{shown.map(m => <li key={m.ply}><button className={`mv ${m.cls} ${m.ply === ply && !node ? 'cur' : ''}`} onClick={() => go(m.ply)}>
           <span className="n">{Math.ceil(m.ply / 2)}{m.color === 'w' ? '.' : '…'}</span> {m.san} <ClassIcon cls={m.cls} /> <small>{formatScore(m.evalAfter)}</small></button></li>)}
           {!shown.length && <li className="empty">{review.moves.length ? 'No moves match this filter.' : 'Waiting for analysis…'}</li>}</ol>
+        {varCount(vars) > 0 && <VariationPanel s={vars} cur={varId} onJump={id => applyLoc(vars, { kind: 'var', id })} onRemove={id => { const r = removeSubtree(vars, id); const inside = (() => { let i = varId; while (i) { if (i === id) return true; i = vars.nodes[i].parent } return false })(); setVars(r.state); if (inside) applyLoc(r.state, r.loc) }} onClear={() => { setVars(emptyVars()); setVarId(null) }} />}
       </section>
       <section className="col-info">
+        <Info part="top" {...{ fen, review, ply, curMove, node, posEval, svcError: svc?.error ?? null, lastBook, showBook, setShowBook, onPlay: playUci, vars, svc, game }} />
         <Summary review={review} hdr={hdr} />
-        <Info {...{ game, review, ply, curMove, sandbox: !!sandbox }} />
+        <Info part="rest" {...{ fen, review, ply, curMove, node, posEval, svcError: svc?.error ?? null, lastBook, showBook, setShowBook, onPlay: playUci, vars, svc, game }} />
         <div className="ctl"><button onClick={() => jump(-1)} disabled={!bad.some(p => p < ply)}>◀ Prev error</button><button onClick={() => jump(1)} disabled={!bad.some(p => p > ply)}>Next error ▶</button></div>
       </section>
     </main>}
   </div>
 }
 
-function Info({ game, review, ply, curMove, sandbox }: { game: ParsedGame; review: Review; ply: number; curMove?: ReviewedMove; sandbox: boolean }) {
-  const e = review.evals[ply], line = e?.lines[0]
-  const mat = material(game.fens[ply])
-  return <div className="info">
-    <div className="evalbox"><b>{line ? formatScore(line.score) : '…'}</b><small>{line ? `depth ${line.depth}${line.nps ? ` · ${Math.round(line.nps / 1000)}k nps` : ''}${line.nodes ? ` · ${line.nodes.toLocaleString()} nodes` : ''}` : 'not analysed yet'}</small></div>
-    {sandbox && <p className="note">Variations are not engine-analysed; the panel shows the main game position.</p>}
-    {line && line.pv.length > 0 && <div><h4>Engine line from this position</h4><p className="pv">{pvToSan(game.fens[ply], line.pv, 8).join(' ')}</p>
-      <p>Best move: <b>{uciToSan(game.fens[ply], line.pv[0]) ?? '—'}</b></p></div>}
-    {curMove && <div className="why"><h4>What was played: {curMove.san} <ClassIcon cls={curMove.cls} /> {CLS_NAME[curMove.cls]}</h4>
+function Info({ part, fen, review, ply, curMove, node, posEval, svcError, lastBook, showBook, setShowBook, onPlay, vars, svc, game }: { part: 'top' | 'rest'; fen: string; review: Review; ply: number; curMove?: ReviewedMove; node: VarState['nodes'][string] | null; posEval?: PositionEval; svcError: string | null
+  lastBook: number; showBook: boolean; setShowBook: (b: boolean) => void; onPlay: (uci: string) => void; vars: VarState; svc: AnalysisService | null; game: ParsedGame }) {
+  const line = posEval?.lines[0], mat = material(fen), inBook = !node && ply < lastBook && !showBook
+  const side = fen.split(' ')[1] === 'w' ? 'White' : 'Black'
+  // Evaluation change caused by the variation move (parent position vs this one), from the mover's point of view.
+  const parentFen = node ? (node.parent ? vars.nodes[node.parent].fen : game.fens[node.anchor]) : null
+  const parentEval = node && parentFen ? (node.parent ? svc?.get(parentFen) : review.evals[node.anchor] ?? undefined) : undefined
+  const mover = parentFen ? (parentFen.split(' ')[1] as 'w' | 'b') : 'w'
+  const delta = parentEval && line ? winPctFor(parentEval.lines[0].score, mover) - winPctFor(line.score, mover) : null
+  const bestSan = line?.pv[0] ? uciToSan(fen, line.pv[0]) : null
+  if (part === 'rest') return <div className="info">
+    {!node && curMove && <div className="why"><h4>What was played: {curMove.san} <ClassIcon cls={curMove.cls} /> {CLS_NAME[curMove.cls]}</h4>
       <p>Eval before {formatScore(review.evals[ply - 1]!.lines[0].score)} → after {formatScore(curMove.evalAfter)} ({curMove.winLoss.toFixed(1)} win-% lost by {curMove.color === 'w' ? 'White' : 'Black'}).</p>
       {explain(game, review, curMove).map((t, i) => <p key={i}>{t}</p>)}
       {BAD.includes(curMove.cls) && <p>Best line: <span className="pv">{pvToSan(game.fens[ply - 1], review.evals[ply - 1]!.lines[0].pv, 6).join(' ')}</span></p>}</div>}
     <p className="mat">Material: {mat === 0 ? 'equal' : mat > 0 ? `White +${mat}` : `Black +${-mat}`}</p>
   </div>
+  return <div className="info">
+    <div className={`evalbox ${node && !posEval ? 'pending' : ''}`}><b>{line ? formatScore(line.score) : node ? 'Analysing…' : '…'}</b><small>{line ? `depth ${line.depth}${line.nps ? ` · ${Math.round(line.nps / 1000)}k nps` : ''}${line.nodes ? ` · ${line.nodes.toLocaleString()} nodes` : ''}` : node ? (svcError ? 'engine error' : 'engine is thinking') : 'not analysed yet'}</small></div>
+    {svcError && <p className="note warn">Engine error: {svcError}. Move to another position to retry.</p>}
+    {node && parentEval && line && <p className="note">This move: eval {formatScore(parentEval.lines[0].score)} → {formatScore(line.score)}{delta !== null && delta > 0.5 ? ` (${delta.toFixed(1)} win-% lost by ${mover === 'w' ? 'White' : 'Black'})` : ''}.</p>}
+    {inBook ? <div className="bestbox"><h4>Opening theory</h4><p>{lookupOpening(game.fens[ply])?.name ?? review.opening?.name ?? 'Book move'}. Engine suggestions start after the book line ends (move {Math.ceil((lastBook + 1) / 2)}).</p><button onClick={() => setShowBook(true)}>Show suggestion anyway</button></div>
+      : line && line.pv.length > 0 ? <div className="bestbox"><h4>Best continuation for {side}</h4><p className="pv">{pvToSan(fen, line.pv, 8).join(' ')}</p>
+        <p>Best move: <b>{bestSan ?? '—'}</b> ({formatScore(line.score)})</p>{bestSan && <button className="primary" onClick={() => onPlay(line.pv[0])}>Play {bestSan}</button>}</div>
+      : line ? <p className="note">Game over in this position.</p> : null}
+  </div>
+}
+
+function VarLine({ s, id, cur, onJump }: { s: VarState; id: string; cur: string | null; onJump: (id: string) => void }) {
+  const chain: string[] = []; for (let i: string | undefined = id; i; i = s.nodes[i].children[0]) chain.push(i)
+  return <span className="vline">{chain.map((k, j) => <span key={k}><button className={`vm ${k === cur ? 'cur' : ''}`} onClick={() => onJump(k)}>{labelOf(s, k)}</button>
+    {j > 0 && s.nodes[chain[j - 1]].children.slice(1).map(c => <span key={c} className="vsub">(<VarLine s={s} id={c} cur={cur} onJump={onJump} />)</span>)} </span>)}</span>
+}
+function VariationPanel({ s, cur, onJump, onRemove, onClear }: { s: VarState; cur: string | null; onJump: (id: string) => void; onRemove: (id: string) => void; onClear: () => void }) {
+  const anchors = Object.keys(s.roots).map(Number).sort((a, b) => a - b)
+  return <div className="vpanel"><h4>Variations <button className="vx" onClick={onClear}>Clear all</button></h4>
+    {anchors.map(a => <div key={a}><small className="note">From move {a === 0 ? 'start' : `${Math.ceil(a / 2)}${a % 2 ? '' : '...'}`}</small>
+      {s.roots[a].map(r => <div className="vrow" key={r}><VarLine s={s} id={r} cur={cur} onJump={onJump} /><button className="vx" aria-label="Delete variation" onClick={() => onRemove(r)}>×</button></div>)}</div>)}</div>
 }
 
 function Report({ game, review }: { game: ParsedGame; review: Review }) {

@@ -72,3 +72,11 @@ header{padding:6px 16px}.tabs{padding:4px 16px}main{padding:8px 16px}
 .ctl button{padding:5px 10px}
 
 .site-foot{color:var(--mut);font-size:11px;text-align:center;padding:10px 16px 14px}
+
+/* Variation exploration */
+.evalbar.pending{opacity:.5}.evalbox.pending b{opacity:.6}
+.bestbox{background:var(--panel);padding:2px 12px 10px;border-radius:8px;margin-top:12px}.bestbox button{margin-top:4px}
+.vpanel{background:var(--panel);border-radius:8px;padding:6px 12px 10px;margin-top:10px}.vpanel h4{margin:6px 0;display:flex;justify-content:space-between;align-items:center}
+.vrow{display:flex;gap:6px;align-items:flex-start;margin:3px 0}.vline{flex:1;line-height:1.9}.vsub{color:var(--mut)}
+.vm{background:transparent;border:1px solid transparent;padding:1px 5px;border-radius:4px}.vm.cur{background:#46423d;border-color:var(--ok)}
+.vx{padding:1px 8px;font-size:12px}
