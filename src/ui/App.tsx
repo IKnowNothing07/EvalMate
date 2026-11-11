@@ -4,6 +4,8 @@ import { Board, EvalBar } from './Board'
 import { Graph } from './Graph'
 import { ClassIcon, CLS_NAME } from './ClassIcon'
 import { Summary } from './Summary'
+import { Loading } from './Loading'
+import { fetchRecentGames, RECENT_DAYS, type RecentGame } from '../chesscom'
 import { AnalysisService } from '../core/analysis'
 import { emptyVars, addMove, stepBack, stepForward, anchorOf, labelOf, removeSubtree, count as varCount, type VarState, type Loc } from '../core/variations'
 import { lookupOpening } from '../core/openings'
@@ -16,7 +18,7 @@ import { explain, pvToSan, uciToSan, material } from '../core/explain'
 import { formatScore } from '../core/eval'
 import { annotatedPgn, reviewJson, reviewHtml, download } from '../export'
 import { toDatasetRecord } from '../dataset/record'
-import { loadAll, saveReview, deleteReview, clearAll, gameId, usedBytes, QUOTA_BYTES, type SavedReview } from '../storage'
+import { loadAll, saveReview, deleteReview, clearAll, gameId, usedBytes, QUOTA_BYTES, loadUsername, saveUsername, forgetUsername, type SavedReview } from '../storage'
 
 const BAD = ['inaccuracy', 'mistake', 'miss', 'blunder']
 const engineUrl = () => (typeof chrome !== 'undefined' && chrome.runtime?.getURL ? chrome.runtime.getURL('engine/stockfish-19-lite-single.js') : './engine/stockfish-19-lite-single.js')
@@ -58,10 +60,11 @@ export function App() {
     setErr('')
     let g: ParsedGame; try { g = parsePgn(text) } catch (e) { setErr(e instanceof PgnError ? e.message : 'Could not read PGN'); return }
     setGame(g); setPgn(text); setPly(0); setVars(emptyVars()); setVarId(null); setTab('analysis'); setReview(buildReview(g, g.fens.map(f => terminalEval(f)), 0))
+    setProg([0, g.fens.length])
     const engine = new Engine(workerTransport(engineUrl())); engineRef.current = engine; abort.current = new AbortController()
     const depth = DEPTHS[depthKey]
     try {
-      await engine.init(); setProg([0, g.fens.length])
+      await engine.init()
       const r = await runReview(g, engine, depth, (d, t, partial) => { setProg([d, t]); setReview(partial) }, abort.current.signal)
       setReview(r)
       if (r.complete) { await saveReview({ id: gameId(text), savedAt: Date.now(), pgn: text, white: g.headers.White ?? '?', black: g.headers.Black ?? '?', result: g.result, review: r }); refresh() }
@@ -110,6 +113,7 @@ export function App() {
         <option value="">Export…</option><option value="pgn">Original PGN</option><option value="apgn" disabled={!review.moves.length}>Analysed PGN</option><option value="json">JSON report</option><option value="html">HTML report</option><option value="dataset">Dataset record (JSON)</option></select>
     </header>
     {err && <div className="err" role="alert">{err}</div>}
+    {prog && <Loading game={game} review={review} done={prog[0]} total={prog[1]} depthLabel={`${depthKey} review · depth ${DEPTHS[depthKey]}`} onCancel={cancel} />}
     <nav className="tabs"><button className={tab === 'analysis' ? 'on' : ''} onClick={() => setTab('analysis')}>Analysis</button><button className={tab === 'report' ? 'on' : ''} onClick={() => setTab('report')}>Report</button></nav>
     {tab === 'report' ? <Report {...{ game, review }} /> : <main>
       <section className="col-board">
@@ -212,29 +216,34 @@ function Report({ game, review }: { game: ParsedGame; review: Review }) {
 }
 
 function Import({ err, setErr, start, saved, refresh, depthKey, setDepthKey, open }: { err: string; setErr: (s: string) => void; start: (t: string) => void; saved: SavedReview[]; refresh: () => void; depthKey: string; setDepthKey: (k: any) => void; open: (s: SavedReview) => void }) {
-  const [text, setText] = useState(''); const [user, setUser] = useState(''); const [games, setGames] = useState<{ pgn: string; label: string }[]>([]); const [busy, setBusy] = useState(false); const [bytes, setBytes] = useState(0)
+  const [text, setText] = useState(''); const [user, setUser] = useState(''); const [games, setGames] = useState<RecentGame[] | null>(null); const [skipped, setSkipped] = useState(0)
+  const [busy, setBusy] = useState(false); const [bytes, setBytes] = useState(0); const [remembered, setRemembered] = useState(false)
   useEffect(() => { usedBytes().then(setBytes) }, [saved])
-  async function fetchGames() {
-    setErr(''); setBusy(true); setGames([])
+  async function fetchGames(name?: string) {
+    setErr(''); setBusy(true); setGames(null)
     try {
-      const u = user.trim().toLowerCase(); if (!/^[a-z0-9_-]{2,25}$/.test(u)) throw new Error('Enter a valid Chess.com username')
-      const a = await fetch(`https://api.chess.com/pub/player/${u}/games/archives`); if (!a.ok) throw new Error(a.status === 404 ? 'User not found' : 'Chess.com API error ' + a.status)
-      const arch: string[] = (await a.json()).archives; if (!arch.length) throw new Error('No games found')
-      const r = await fetch(arch[arch.length - 1]); if (!r.ok) throw new Error('Chess.com API error ' + r.status)
-      const gs = ((await r.json()).games as any[]).filter(g => g.pgn && g.rules === 'chess').reverse().slice(0, 25)
-      setGames(gs.map(g => ({ pgn: g.pgn, label: `${g.white.username} (${g.white.rating}) vs ${g.black.username} (${g.black.rating}) · ${g.time_class}` })))
-      if (!gs.length) setErr('No standard-chess games in the latest archive.')
+      const r = await fetchRecentGames(name ?? user); const u = (name ?? user).trim().toLowerCase()
+      setGames(r.games); setSkipped(r.skipped); setUser(u); await saveUsername(u); setRemembered(true)   // remember only usernames that worked
     } catch (e) { setErr((e as Error).message + '. You can paste a PGN instead.') } finally { setBusy(false) }
   }
+  // Remembered username: pre-fill and load the last 30 days straight away.
+  useEffect(() => { loadUsername().then(u => { if (u) { setUser(u); setRemembered(true); fetchGames(u) } }) }, [])
   const n = saved.length, wdl = { w: 0, d: 0, l: 0 }
-  saved.forEach(s => { const me = user.trim().toLowerCase(); void me; if (s.result === '1/2-1/2') wdl.d++; else if (s.result === '1-0') wdl.w++; else if (s.result === '0-1') wdl.l++ })
+  saved.forEach(s => { if (s.result === '1/2-1/2') wdl.d++; else if (s.result === '1-0') wdl.w++; else if (s.result === '0-1') wdl.l++ })
   const accs = saved.map(s => s.review.accuracy.w).filter((x): x is number => x !== null)
+  const tally = games ? { Win: games.filter(g => g.result === 'Win').length, Loss: games.filter(g => g.result === 'Loss').length, Draw: games.filter(g => g.result === 'Draw').length } : null
   return <div className="app import"><header><b className="logo">♞ EvalMate</b><span className="meta">Local Stockfish game review — nothing is uploaded.</span></header>
     {err && <div className="err" role="alert">{err}</div>}
     <div className="grid">
-      <section><h3>Import from Chess.com</h3><p className="note">Uses Chess.com's public game archive for a username (latest month). Only completed games.</p>
-        <input placeholder="Chess.com username" value={user} onChange={e => setUser(e.target.value)} onKeyDown={e => e.key === 'Enter' && fetchGames()} /> <button onClick={fetchGames} disabled={busy}>{busy ? 'Loading…' : 'Find games'}</button>
-        <ul className="list">{games.map((g, i) => <li key={i}><button onClick={() => start(g.pgn)}>{g.label}</button></li>)}</ul>
+      <section><h3>Import from Chess.com</h3><p className="note">Loads every standard game from the last {RECENT_DAYS} days (across months). Your username is remembered on this device.</p>
+        <div className="row"><input placeholder="Chess.com username" aria-label="Chess.com username" value={user} onChange={e => setUser(e.target.value)} onKeyDown={e => e.key === 'Enter' && fetchGames()} />
+          <button onClick={() => fetchGames()} disabled={busy}>{busy ? 'Loading…' : games ? 'Refresh' : 'Find games'}</button>
+          {remembered && <button aria-label="Forget username" title="Forget this username" onClick={async () => { await forgetUsername(); setRemembered(false); setUser(''); setGames(null) }}>Forget</button>}</div>
+        {busy && <p className="note">Fetching games from Chess.com…</p>}
+        {games && tally && <p className="note" role="status">{games.length} game{games.length === 1 ? '' : 's'} in the last {RECENT_DAYS} days{games.length ? ` · ${tally.Win}W ${tally.Loss}L ${tally.Draw}D` : ''}{skipped ? ` · ${skipped} variant game${skipped === 1 ? '' : 's'} skipped` : ''}</p>}
+        <ul className="list glist">{(games ?? []).map((g, i) => <li key={g.url ?? i}><button className="gbtn" onClick={() => start(g.pgn)}>
+          <span className="gdate">{g.date}</span><span className={`gres ${g.result}`}>{g.result}</span><span className="gopp"><i className={`chip ${g.color}`} />vs {g.opponent}{g.oppRating ? ` (${g.oppRating})` : ''}</span><small>{g.timeClass}{g.reason ? ` · ${g.reason}` : ''}</small></button></li>)}</ul>
+        {games && !games.length && <p className="note">No standard-chess games in the last {RECENT_DAYS} days. You can paste a PGN below.</p>}
         <h3>Or paste / upload a PGN</h3><textarea rows={8} placeholder="Paste PGN here" value={text} onChange={e => setText(e.target.value)} />
         <div className="row"><input type="file" accept=".pgn,text/plain" aria-label="Upload PGN" onChange={async e => { const f = e.target.files?.[0]; if (f) setText(await f.text()) }} />
           <select value={depthKey} onChange={e => setDepthKey(e.target.value)} aria-label="Strength"><option value="quick">Quick (depth {DEPTHS.quick})</option><option value="standard">Standard (depth {DEPTHS.standard})</option><option value="deep">Deep (depth {DEPTHS.deep})</option></select>
@@ -246,7 +255,6 @@ function Import({ err, setErr, start, saved, refresh, depthKey, setDepthKey, ope
         {n > 0 && <button onClick={async () => { if (confirm('Delete all saved reviews?')) { await clearAll(); refresh() } }}>Delete all</button>}</section>
     </div></div>
 }
-void useMemo
 
 function PlayerBar({ hdr, color }: { hdr: Record<string, string>; color: 'w' | 'b' }) {
   const name = color === 'w' ? hdr.White : hdr.Black, elo = color === 'w' ? hdr.WhiteElo : hdr.BlackElo

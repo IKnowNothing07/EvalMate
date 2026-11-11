@@ -21,3 +21,11 @@ export async function deleteReview(id: string) { await put((await loadAll()).fil
 export async function clearAll() { await put([]) }
 export async function usedBytes() { return hasChrome() ? await chrome.storage.local.getBytesInUse(KEY) : (localStorage.getItem(KEY) ?? '').length }
 export const gameId = (pgn: string) => { let h = 5381; for (const c of pgn) h = ((h << 5) + h + c.charCodeAt(0)) | 0; return 'g' + (h >>> 0).toString(36) }
+
+// Remember the last Chess.com username (this device/browser only).
+const UKEY = 'evalmate.chesscom.username'
+export async function loadUsername(): Promise<string> {
+  try { const v = hasChrome() ? ((await chrome.storage.local.get(UKEY))[UKEY] as string | undefined) : localStorage.getItem(UKEY); return v && /^[a-z0-9_-]{2,25}$/.test(v) ? v : '' } catch { return '' }
+}
+export async function saveUsername(u: string) { try { if (hasChrome()) await chrome.storage.local.set({ [UKEY]: u }); else localStorage.setItem(UKEY, u) } catch { /* storage unavailable: just don't remember */ } }
+export async function forgetUsername() { try { if (hasChrome()) await chrome.storage.local.remove(UKEY); else localStorage.removeItem(UKEY) } catch { /* ignore */ } }

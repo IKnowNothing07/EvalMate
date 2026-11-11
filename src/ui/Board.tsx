@@ -7,6 +7,7 @@ import type { Score } from '../core/types'
 // Pieces: Colin M.L. Burnett "cburnett" set via Lichess (GPLv2+). See README.
 const URLS = import.meta.glob('../assets/pieces/*.svg', { eager: true, query: '?url', import: 'default' }) as Record<string, string>
 const piece = (color: string, type: string) => URLS[`../assets/pieces/${color}${type.toUpperCase()}.svg`]
+export const pieceUrl = piece
 export interface Props { fen: string; flipped: boolean; last?: [string, string] | null; arrow?: [string, string] | null; badge?: { sq: string; cls: Classification } | null; onMove: (from: string, to: string, promotion?: string) => void }
 
 export function EvalBar({ score, flipped, pending }: { score?: Score; flipped: boolean; pending?: boolean }) {

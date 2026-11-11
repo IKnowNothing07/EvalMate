@@ -80,3 +80,26 @@ header{padding:6px 16px}.tabs{padding:4px 16px}main{padding:8px 16px}
 .vrow{display:flex;gap:6px;align-items:flex-start;margin:3px 0}.vline{flex:1;line-height:1.9}.vsub{color:var(--mut)}
 .vm{background:transparent;border:1px solid transparent;padding:1px 5px;border-radius:4px}.vm.cur{background:#46423d;border-color:var(--ok)}
 .vx{padding:1px 8px;font-size:12px}
+
+/* Chess.com game list */
+.glist{max-height:360px;overflow:auto;padding-right:4px}.glist li{margin:3px 0}
+.gbtn{width:100%;display:grid;grid-template-columns:52px 52px 1fr auto;gap:8px;align-items:center;text-align:left;padding:7px 10px}.gbtn small{color:var(--mut)}
+.gdate{color:var(--mut)}.gres{font-weight:800}.gres.Win{color:var(--ok)}.gres.Loss{color:var(--bad)}.gres.Draw{color:var(--mut)}.gopp{display:flex;align-items:center;gap:6px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.import .row input[type=text],.import .row input:not([type]){flex:1;min-width:140px}
+/* Evaluating-the-game loading page */
+.loading{position:fixed;inset:0;z-index:100;display:flex;align-items:center;justify-content:center;padding:16px;overflow:auto;background:radial-gradient(ellipse at 50% 30%,#34312d 0,#1d1b19 70%);animation:lfade .35s ease-out}
+.lcard{width:min(520px,100%);text-align:center}.lcard h2{margin:14px 0 2px;font-size:24px;letter-spacing:.2px}
+.ldots::after{content:'';display:inline-block;width:1.2em;text-align:left;animation:ldots 1.4s steps(4) infinite}
+.lplayers{color:var(--mut);margin:0 0 14px}.lplayers em{margin:0 4px}
+.lboard{position:relative;display:grid;grid-template-columns:repeat(8,1fr);width:208px;height:208px;margin:0 auto;border-radius:6px;overflow:hidden;box-shadow:0 8px 30px #0008}
+.lboard i{display:block}.lboard i.l{background:#ebecd0}.lboard i.d{background:#739552}
+.lknight{position:absolute;left:0;top:0;width:12.5%;height:12.5%;transition:transform .38s cubic-bezier(.4,0,.2,1);filter:drop-shadow(0 2px 2px #0006)}
+.lbar{height:12px;background:#3a3733;border-radius:8px;overflow:hidden;margin:0 auto;max-width:440px}
+.lbar i{display:block;height:100%;border-radius:8px;background:linear-gradient(90deg,#5d9948,#9bc53d);transition:width .35s ease;position:relative;overflow:hidden}
+.lbar i::after{content:'';position:absolute;inset:0;background:linear-gradient(90deg,transparent,rgba(255,255,255,.45),transparent);transform:translateX(-100%);animation:lshimmer 1.5s infinite}
+.lstat{color:var(--mut);margin:8px 0 12px;font-size:13px}.lstat b{color:var(--tx);font-size:15px}
+.lgraph{max-width:440px;margin:0 auto 10px;pointer-events:none}.lgraph .graph{margin:0}
+.llast{min-height:26px;margin:4px 0;display:flex;gap:8px;justify-content:center;align-items:center}.llast span{color:var(--mut)}
+.ltip{color:var(--mut);font-size:13px;min-height:38px;max-width:420px;margin:6px auto 12px;animation:lfade .6s}
+@keyframes lfade{from{opacity:0}to{opacity:1}}@keyframes lshimmer{to{transform:translateX(100%)}}@keyframes ldots{0%{content:''}25%{content:'.'}50%{content:'..'}75%{content:'...'}}
+@media(prefers-reduced-motion:reduce){.loading,.loading *{animation:none!important;transition:none!important}}

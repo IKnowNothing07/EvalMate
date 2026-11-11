@@ -26,3 +26,14 @@ describe('graph visual scale (never affects data)', () => {
   it('is gentler than the win% scale used for the bar and for classification', () => { expect(GRAPH_CP_SCALE).toBeLessThan(1); expect(Math.abs(graphLevel(300) - 50)).toBeLessThan(Math.abs(winPct(300) - 50)) })
   it('keeps mate at the extreme', () => expect(graphLevel(9997)).toBeGreaterThan(99.9))
 })
+import { knightTour, bounce } from '../src/ui/knightTour'
+describe('loading page knight tour', () => {
+  const t = knightTour()
+  it('visits all 64 squares exactly once, every step a knight move', () => {
+    expect(new Set(t.map(([x, y]) => y * 8 + x)).size).toBe(64)
+    for (let i = 1; i < 64; i++) { const dx = Math.abs(t[i][0] - t[i - 1][0]), dy = Math.abs(t[i][1] - t[i - 1][1]); expect([dx, dy].sort().join()).toBe('1,2') }
+  })
+  it('bounce walks forward then backward with no jumps, forever', () => {
+    for (let i = 0; i < 400; i++) { const a = bounce(i), b = bounce(i + 1); expect(Math.abs(a - b)).toBe(1); expect(a).toBeGreaterThanOrEqual(0); expect(a).toBeLessThanOrEqual(63) }
+  })
+})
