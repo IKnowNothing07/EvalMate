@@ -1,80 +1,131 @@
-# EvalMate — Chess Game Review (v0.2)
-Local Stockfish game review as a Manifest V3 Chrome extension. Nothing is uploaded; no telemetry; no API keys.
+# EvalMate ♞ — Chess Game Review in your browser
 
-## Setup (Windows PowerShell)
-1. Install Node.js LTS (v20+): `winget install OpenJS.NodeJS.LTS`, then reopen PowerShell. Check: `node -v`
-2. In the project folder: `npm install`
-3. `npm test`   (unit tests + real-Stockfish tests)
-4. `npm run build`   (type-checks, then builds to `dist/`)
-5. Chrome → `chrome://extensions` → enable **Developer mode** → **Load unpacked** → choose the `dist` folder.
-6. Click the EvalMate toolbar icon → **Open EvalMate**.
+EvalMate reviews a finished chess game with the **Stockfish** engine and shows you what happened: an evaluation graph, a label for every move (Brilliant, Great, Best, … Blunder), accuracy, game phases, and the engine's best continuation from any position. Everything runs **on your own device**; your games are never uploaded.
 
-## Usage
-- **Chess.com:** type your username → *Find games* (latest month, public archive) → click a game. Or finish a game, copy its PGN from Chess.com's share/download dialog, paste it (or upload a `.pgn`) and press **Review Game**.
-- Pick Quick (depth 10) / Standard (14) / Deep (18). Cancel any time; an interrupted review is labelled INCOMPLETE and is not saved.
-- Keys: ←/→ move, Home/End. Click or drag pieces to explore a variation (not saved, not engine-analysed).
+**Live site:** https://iknownothing07.github.io/EvalMate/
 
-## Permissions
-- `storage` — save reviews/preferences locally (~10 MB quota).
-- Host `https://api.chess.com/*` — fetch your public game archive. No other site is accessed.
-- CSP `wasm-unsafe-eval` — required to run Stockfish WebAssembly. No content script and no `tabs` permission are used.
+---
 
-## Algorithms
-Evals are stored from White's perspective; converted to win% (logistic, `50+50*(2/(1+e^(-0.00368208cp))-1)`) and compared from the mover's side. Win-% lost: ≤0.5 Best, ≤2 Excellent, ≤5 Good, ≤10 Inaccuracy, ≤20 Mistake, else Blunder; Miss = lost a ≥85% position without falling below 40%. Great = only good move (second line ≥15 win-% worse). Brilliant = rare: engine-best sacrifice of a ≥3-point piece in a not-already-winning position. Book = position in the Lichess opening DB. Accuracy = mean of `103.17·e^(−0.04354·loss) − 3.17` (book moves excluded). All thresholds: `src/core/classify.ts`. Accuracy is EvalMate's estimate, not Chess.com's.
+## Features
 
-## Third-party notices
-- **Stockfish 19** (GPL-3.0) — `public/engine/`, from npm `stockfish@19.0.1`; license `STOCKFISH-COPYING.txt`. Source: https://github.com/official-stockfish/Stockfish and https://github.com/nmrugg/stockfish.js . Because Stockfish is GPL-3.0, distribute EvalMate under GPL-3.0-compatible terms with this source.
-- **Opening data** — lichess-org/chess-openings (CC0). Regenerate: `npm run build:openings`.
-- **Chess pieces** — "cburnett" set by Colin M.L. Burnett via lichess-org/lila (GPLv2+), in `src/assets/pieces/`. Not Chess.com artwork.
-- chess.js (BSD-2), React (MIT), Vite (MIT).
+- **Import games**
+  - Chess.com: type a username and EvalMate lists every standard game from the **last 30 days** (across months). The username is remembered on your device.
+  - Or paste a PGN / upload a `.pgn` file.
+- **Real engine analysis** — Stockfish 19 (WebAssembly, in a Web Worker) analyses every position. Choose Quick, Standard or Deep. A loading page shows live progress.
+- **Move classification** — Brilliant, Great, Best, Excellent, Good, Book, Inaccuracy, Mistake, Miss, Blunder, with Chess.com-style icons and colours.
+- **Summary** — accuracy per side, move counts, Opening / Middlegame / Endgame performance, and an *estimated* game rating.
+- **Evaluation graph** — smooth curve through the exact engine values; click or drag to jump to any move. Synced with the board, move list and evaluation bar.
+- **Interactive board** — click or drag pieces, flip, promotion choice, best-move arrow.
+- **Explore variations** — see the engine's best continuation at any position, play it or make your own moves, and keep going. The original game and its graph are never changed; only the evaluation bar follows the position you are looking at.
+- **Export** — original PGN, annotated PGN, JSON report, HTML report, and a dataset record.
+- **Saved reviews** — stored locally in your browser, with search, delete and storage meter.
+- **Also a Chrome extension** — the same code builds as a Manifest V3 extension.
 
-## Troubleshooting
-- *Engine error / timeout:* reload the extension at `chrome://extensions`; try Quick depth; check the page console (F12) for CSP errors.
-- *"Failed to fetch" on Find games:* username typo, or offline. Paste a PGN instead.
-- *Manifest error on load:* you must select `dist`, not the project root. Run `npm run build` first.
-- *Variant rejected:* only standard chess is supported.
+## How to use it
 
-## Implemented / not yet
-Implemented: PGN paste/upload/Chess.com archive import, real Stockfish review with cancel, classification, accuracy, eval graph, board (click/drag, promotion, flip, check, arrows), error navigation, deterministic explanations, report, history/delete, exports (PGN, analysed PGN, JSON, HTML).
-Not implemented / limits: no content script — pulling the game from the open Chess.com tab; variations are single-line sandboxes (no tree, no engine analysis); fork/pin/skewer motif detection (only missed captures/checks, allowed piece-wins and mate are explained); opening-phase is split by move number; dashboard shows only W/D/L-by-White and average White accuracy (no mistake-category or opening charts); no optional LLM explanations; no automated UI tests beyond the manual Playwright run; analysed-PGN export covers the main line only; unicode pieces rather than custom artwork; extension was tested as a static page in headless Chromium, not loaded via chrome://extensions.
+1. Open the live site.
+2. Enter your Chess.com username and press **Find games**, or paste a PGN.
+3. Pick a strength and press **Review Game** (or click a game in the list).
+4. Wait for the "Evaluating the game" page to finish, then step through the moves with the arrow keys, the buttons, or the graph.
+5. Use **Play …** in the *Best continuation* card to explore the engine's suggestion, and **Back to game** to return.
 
+## Run it locally
 
-## v0.3 — classification, phases and rating (how it works)
-**Pipeline.** Every position is analysed once (Stockfish lite, MultiPV 2, depth 10/14/18, cached by FEN+depth). `buildReview` (src/core/review.ts) is the single source of truth: each move gets exactly one class plus its before/after evals, phase and flags; the board badge, move list, graph markers, summary counts, phases and rating are all read from it. Saved reviews are re-classified from their stored evals when opened, so rule changes never leave stale labels.
-**Classification** (src/core/classify.ts, thresholds in `DEFAULT_THRESHOLDS`; win-% lost from the mover's view): Book > Brilliant > Great > Best > Excellent (<=2) > Good (<=5) > Miss > Inaccuracy (<=10) > Mistake (<=20) > Blunder.
-- *Best*: engine's top move, or a listed MultiPV alternative within 0.5. The played move's own MultiPV line is used when listed (same search, no depth noise).
-- *Brilliant*: Best-tier AND a sacrifice AND not a recapture AND still >= 40% afterwards AND not made when already far ahead (win% > 90 AND up >= 4 points of material; a forced mate is exempt). A sacrifice is either (a) material given up along the engine's own continuation (>= 2 points, regained exchanges don't count), or (b) a static-exchange test: the moved piece (>= 3 points) can be taken for a net gain, the piece risked exceeds what the move captured by >= 2, and you end >= 1 point down (so even trades never qualify). (b) is what catches e.g. 17.Bxa6 in the reference game, where the engine's own line never accepts the sacrifice.
-- *Great*: engine's only good move (second line >= 15 win-% worse), not a recapture, not a single legal move.
-- *Miss*: the opponent's previous move lost >= 8 win-%, you had >= 60% (or a forced mate) and your move gave up >= 8 win-% without collapsing (>= 35%). Collapses are Blunders; ordinary errors without an opponent error are Inaccuracy/Mistake.
-- *Book*: position is in the Lichess opening DB (CC0), stays book only while you stay in theory (re-entry by transposition only in the first 12 plies); a checkmating move is never Book. Book moves are excluded from accuracy and rating.
-**Phases** (src/core/phase.ts, Lichess-Divider-style): endgame <= 6 minor/major pieces; middlegame <= 10 pieces or either back rank has < 4 pieces; else opening; phases only move forward; each move takes the phase of the position before it. Per-phase accuracy needs >= 3 analysed non-book moves, otherwise "—". The phase icon comes from the phase's average win-% loss.
-**Accuracy**: mean of 103.17*exp(-0.04354*loss)-3.17 per move (Lichess-style fit). EvalMate's estimate, not Chess.com's.
-**Estimated game rating** (src/core/rating.ts): Regan & Haworth intrinsic-performance model, IPR ~= 3571 - 15413 * mean scaled error, using only non-book moves in positions within +-3 pawns, needing >= 8 such moves, rounded to 50. Shown as n/a (with the reason on hover) if too few moves or if the result is outside 400-3000. Limitations: constants were fitted for another engine/depth, it is NOT calibrated against Chess.com's game ratings (their formula isn't public), decisive one-sided games often yield n/a, and short games are noisy (the same game can differ by hundreds of points between depths). Treat it as rough.
-**Calibration data wanted:** to calibrate, supply PGNs together with the Chess.com game ratings/classifications shown for them; the model can then be fitted and checked.
-**Tests:** `npm test` (44 tests incl. real-Stockfish validation on the Opera Game, an en-passant/castling game and Fool's mate).
+Requirements: **Node.js 20+** and **git**. (On Windows, WSL works well.)
 
-**Reference game (regression test).** The position before 17.Bxa6 from a real Chess.com review (marked Brilliant there) is in tests/validate.test.ts and must stay Brilliant.
-**Known differences from Chess.com:** their win-probability curve depends on player rating (flatter for ~1000-rated players) and they use a stronger engine, so EvalMate tends to show more Inaccuracies and more "Best" (vs "Excellent") than Chess.com on low-rated games, and gives a different accuracy number.
+```bash
+git clone https://github.com/IKnowNothing07/EvalMate.git
+cd EvalMate
+npm install
 
-## v0.4 — regression dataset (see dataset/README.md)
-`npm run dataset:report` (metrics), `npm run dataset:build` (re-analyse with real Stockfish), `npm run dataset:import -- file.pgn --source "..." --license "..."`, `npm run dataset:puzzles -- lichess_db_puzzle.csv`, and in the app **Export > Dataset record (JSON)**. `npm test` = 83 tests (the dataset tests run offline from stored Stockfish evals, so they are deterministic).
-Sources actually used: public-domain historical games, a 4-label/2-aggregate Chess.com reference typed from user screenshots, synthetic fixtures, Stockfish (GPL-3.0) evals, Lichess openings (CC0). The Lichess database/puzzles/evals and Chess.com's documentation were not reachable from the build environment, so none were downloaded or read.
+npm test                  # unit + browser-free engine tests (real Stockfish)
+npm run build:web         # build the website into docs/
+npm run preview:web       # serve docs/ at http://localhost:4173
+```
 
-## Website version (GitHub Pages)
-Same code, second build target: `npm run build:web` writes a static site to `docs/` (`npm run build` still builds the Chrome extension to `dist/`).
-Publish: push the repo to GitHub, then Settings > Pages > Source "Deploy from a branch" > branch `main`, folder `/docs`. The site is at `https://<user>.github.io/<repo>/`.
-Notes: everything runs in the visitor's browser (Stockfish WASM in a Web Worker; no server). Saved reviews use the browser's localStorage (~5 MB, per device and per browser, not synced). The Chess.com username import calls the public api.chess.com from the page; if the browser blocks it, paste a PGN instead. Stockfish is GPL-3.0, so keep the repository public with `LICENSE` and this source. After changing code, re-run `npm run build:web` and commit `docs/`.
+| Command | What it does |
+|---|---|
+| `npm run build:web` | Type-check, then build the website into `docs/` |
+| `npm run preview:web` | Serve the built website locally |
+| `npm run build` | Build the Chrome extension into `dist/` |
+| `npm run typecheck` | TypeScript check only |
+| `npm test` | Run all automated tests |
+| `npm run dataset:report` | Classifier accuracy report on the regression dataset |
+| `npm run dataset:build` | Re-analyse the dataset games with Stockfish |
+| `npm run dataset:import -- file.pgn --source "…" --license "…"` | Add your own games to the dataset |
+| `npm run build:openings` | Rebuild the opening database from Lichess data |
 
-## v0.5 — aligned with Chess.com's published classification rules
-Source: Chess.com's support article on move classifications (text/screenshot supplied by the project owner; I could not open it from the build environment).
-- **Expected-points bands** (already used): Best 0.00, Excellent <=0.02, Good <=0.05, Inaccuracy <=0.10, Mistake <=0.20, Blunder >0.20. Chess.com's curve depends on player rating; ours is a fixed curve (no rating-dependent generosity: NOT implemented).
-- **Brilliant**: best *or nearly best* (loss <= Excellent), a good piece sacrifice, not in a bad position afterwards (>= 40%), and the best *alternative* move is not already completely winning (< 95% win, about +8 pawns; or a mate the alternative does not also have). Previously: capped by the position before the move.
-- **Great**: top move that is critical: the second-best line is >= 15 win-% worse, OR the best line is in a better outcome state (losing < 35%, equal, winning > 65%) than the second-best by >= 8. Not recaptures, not forced single moves.
-- **Miss**: opponent's last move was a real mistake (>= 0.10 expected points), the best move would be winning (> 65%) or mate, and this move gave up >= 8 win-% without collapsing (collapse = Blunder).
-Tests: `npm test` (85 tests). Regression record: Chess.com-verified 2/2, manually-reviewed 7/7 (assistant, not independent); engine-derived agreement 77%.
+### Chrome extension
 
-## v0.6 — recent Chess.com games, remembered username, loading page
-- **Last 30 days:** `src/chesscom.ts` reads every Chess.com archive month that overlaps the last 30 days (so it works across month and year boundaries), keeps games whose `end_time` is inside the window, skips variants (Chess960 etc.) and shows Win/Loss/Draw from the user's side, newest first. Public API only (`api.chess.com/pub`), requests are sequential.
-- **Remembered username:** saved in this browser/device (localStorage on the website, `chrome.storage` in the extension) after a lookup succeeds, pre-filled on the next visit with the last 30 days loaded automatically. "Forget" removes it. It is not synced between devices.
-- **Loading page:** while a game is evaluated (including engine start-up) a full-screen "Evaluating the game" page shows an animated knight's tour, a progress bar with the real position count, the evaluation graph drawing live, the last evaluated move, rotating tips, and Cancel. Respects `prefers-reduced-motion`.
-- Tested with unit tests (mocked API) and browser tests against a mocked Chess.com API; not tested against the live API (not reachable from the build environment). If a browser blocks the cross-origin request, the page says so and you can paste a PGN.
+```bash
+npm run build
+```
+
+Then open `chrome://extensions`, turn on **Developer mode**, choose **Load unpacked**, and select the `dist` folder.
+
+## Deploy to GitHub Pages
+
+The site is served from the `docs/` folder of the `main` branch.
+
+1. `npm run build:web`
+2. `git add . && git commit -m "update" && git push`
+3. In the repository: **Settings → Pages → Source: Deploy from a branch → `main` / `/docs`**.
+
+## How it works (short version)
+
+1. **PGN → positions** (`chess.js`): every move gets a validated position.
+2. **Stockfish** evaluates each position (two best lines). All scores are stored from White's point of view and converted to the mover's view only when comparing.
+3. **Win probability** is computed from the evaluation, and each move is classified by how much win probability it **lost** compared with the engine's best move, plus special rules for Brilliant (a sound piece sacrifice), Great (an important only-move), Miss (not punishing an opponent's mistake) and Book (Lichess opening database).
+4. **Accuracy and phases** are computed from the same data; the opening phase is detected from the position, not the move number.
+5. One `Review` object feeds the board, move list, graph and summary, so they can never disagree.
+
+Code map:
+
+```
+src/core/      PGN parsing, engine wrapper, evaluation, classification, accuracy,
+               phases, rating, openings, variations, on-demand analysis
+src/ui/        React components: board, graph, summary, loading page, app shell
+src/chesscom.ts  Chess.com public-API import (last 30 days)
+src/dataset/   Tools for testing the classifier against labelled data
+dataset/       Regression dataset (games, labels with provenance, stored evals)
+tests/         Automated tests (Vitest)
+docs/          Built website (GitHub Pages)
+public/engine/ Stockfish WebAssembly files
+```
+
+## Accuracy of the labels — please read
+
+EvalMate is **inspired by** Chess.com's Game Review but is an **independent approximation**. Chess.com's exact algorithm is not public, so labels will sometimes differ.
+
+- The loss bands for Best/Excellent/Good/Inaccuracy/Mistake/Blunder follow Chess.com's *published* expected-points table. Chess.com's win-probability curve depends on the player's rating; EvalMate uses one fixed curve.
+- Brilliant, Great and Miss follow Chess.com's published descriptions, implemented with Stockfish. Great-move detection in particular is basic and is being improved.
+- **Accuracy** and the **estimated game rating** are EvalMate's own estimates. The rating is rough, is often shown as "n/a" when there isn't enough data, and is not Chess.com's number.
+- The regression dataset contains very few Chess.com-verified labels (see `dataset/README.md`), so EvalMate does **not** claim to match Chess.com.
+- The engine is the lightweight single-thread Stockfish build, so it is weaker and slower than desktop Stockfish; results can differ at low depth.
+
+## Privacy
+
+- Games are analysed in your browser. There is no EvalMate server.
+- The only network request is to Chess.com's public API when you press **Find games**, made directly from your browser.
+- Saved reviews and your last username are stored in your browser's local storage on that device only (not synced).
+- No analytics or tracking.
+
+## Limitations
+
+- Standard chess only (Chess960 and other variants are skipped).
+- Variations you explore are not saved and are not given Best/Mistake labels.
+- If a browser blocks the Chess.com request, paste a PGN instead.
+- Reviews are per browser and device.
+
+## License and credits
+
+EvalMate is released under the **GNU GPL v3** (see `LICENSE`), because it includes Stockfish.
+
+- [Stockfish](https://stockfishchess.org/) 19 — GPL-3.0 (via the [`stockfish`](https://www.npmjs.com/package/stockfish) npm package)
+- [chess.js](https://github.com/jhlywa/chess.js) — BSD-2-Clause
+- [React](https://react.dev/), [Vite](https://vite.dev/), [Vitest](https://vitest.dev/) — MIT
+- Chess pieces: "cburnett" set by Colin M. L. Burnett via [Lichess](https://github.com/lichess-org/lila) — GPLv2+
+- Opening names and ECO codes: [lichess-org/chess-openings](https://github.com/lichess-org/chess-openings) — CC0
+- Icon paths: Material Design Icons — Apache-2.0
+
+EvalMate is not affiliated with Chess.com or Lichess.
