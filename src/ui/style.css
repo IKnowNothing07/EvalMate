@@ -103,3 +103,5 @@ header{padding:6px 16px}.tabs{padding:4px 16px}main{padding:8px 16px}
 .ltip{color:var(--mut);font-size:13px;min-height:38px;max-width:420px;margin:6px auto 12px;animation:lfade .6s}
 @keyframes lfade{from{opacity:0}to{opacity:1}}@keyframes lshimmer{to{transform:translateX(100%)}}@keyframes ldots{0%{content:''}25%{content:'.'}50%{content:'..'}75%{content:'...'}}
 @media(prefers-reduced-motion:reduce){.loading,.loading *{animation:none!important;transition:none!important}}
+
+.linkbtn{background:none;border:none;padding:0 2px;color:#9bc53d;text-decoration:underline;cursor:pointer;font:inherit}.linkbtn:hover{color:#b6dd5a;background:none}

@@ -5,7 +5,7 @@ import { Graph } from './Graph'
 import { ClassIcon, CLS_NAME } from './ClassIcon'
 import { Summary } from './Summary'
 import { Loading } from './Loading'
-import { fetchRecentGames, RECENT_DAYS, type RecentGame } from '../chesscom'
+import { fetchRecentGames, RECENT_DAYS, EXAMPLE_USERNAME, type RecentGame } from '../chesscom'
 import { AnalysisService } from '../core/analysis'
 import { emptyVars, addMove, stepBack, stepForward, anchorOf, labelOf, removeSubtree, count as varCount, type VarState, type Loc } from '../core/variations'
 import { lookupOpening } from '../core/openings'
@@ -217,13 +217,14 @@ function Report({ game, review }: { game: ParsedGame; review: Review }) {
 
 function Import({ err, setErr, start, saved, refresh, depthKey, setDepthKey, open }: { err: string; setErr: (s: string) => void; start: (t: string) => void; saved: SavedReview[]; refresh: () => void; depthKey: string; setDepthKey: (k: any) => void; open: (s: SavedReview) => void }) {
   const [text, setText] = useState(''); const [user, setUser] = useState(''); const [games, setGames] = useState<RecentGame[] | null>(null); const [skipped, setSkipped] = useState(0)
-  const [busy, setBusy] = useState(false); const [bytes, setBytes] = useState(0); const [remembered, setRemembered] = useState(false)
+  const [busy, setBusy] = useState(false); const [bytes, setBytes] = useState(0); const [remembered, setRemembered] = useState(false); const [example, setExample] = useState(false)
   useEffect(() => { usedBytes().then(setBytes) }, [saved])
-  async function fetchGames(name?: string) {
-    setErr(''); setBusy(true); setGames(null)
+  async function fetchGames(name?: string, remember = true) {
+    setErr(''); setBusy(true); setGames(null); setExample(!remember)
     try {
       const r = await fetchRecentGames(name ?? user); const u = (name ?? user).trim().toLowerCase()
-      setGames(r.games); setSkipped(r.skipped); setUser(u); await saveUsername(u); setRemembered(true)   // remember only usernames that worked
+      setGames(r.games); setSkipped(r.skipped); setUser(u)
+      if (remember) { await saveUsername(u); setRemembered(true) }   // remember only the user's own usernames that worked (never the example)
     } catch (e) { setErr((e as Error).message + '. You can paste a PGN instead.') } finally { setBusy(false) }
   }
   // Remembered username: pre-fill and load the last 30 days straight away.
@@ -236,9 +237,11 @@ function Import({ err, setErr, start, saved, refresh, depthKey, setDepthKey, ope
     {err && <div className="err" role="alert">{err}</div>}
     <div className="grid">
       <section><h3>Import from Chess.com</h3><p className="note">Loads every standard game from the last {RECENT_DAYS} days (across months). Your username is remembered on this device.</p>
-        <div className="row"><input placeholder="Chess.com username" aria-label="Chess.com username" value={user} onChange={e => setUser(e.target.value)} onKeyDown={e => e.key === 'Enter' && fetchGames()} />
+        <div className="row"><input placeholder={`Chess.com username, e.g. ${EXAMPLE_USERNAME}`} aria-label="Chess.com username" value={user} onChange={e => { setUser(e.target.value); setExample(false) }} onKeyDown={e => e.key === 'Enter' && fetchGames()} />
           <button onClick={() => fetchGames()} disabled={busy}>{busy ? 'Loading…' : games ? 'Refresh' : 'Find games'}</button>
           {remembered && <button aria-label="Forget username" title="Forget this username" onClick={async () => { await forgetUsername(); setRemembered(false); setUser(''); setGames(null) }}>Forget</button>}</div>
+        {!remembered && !games && !busy && !user && <p className="note">New here? <button className="linkbtn" onClick={() => { setUser(EXAMPLE_USERNAME); fetchGames(EXAMPLE_USERNAME, false) }}>Try an example: {EXAMPLE_USERNAME}</button></p>}
+        {example && games && !busy && <p className="note">Showing the example account <b>{EXAMPLE_USERNAME}</b>. Enter your own username above to review your games.</p>}
         {busy && <p className="note">Fetching games from Chess.com…</p>}
         {games && tally && <p className="note" role="status">{games.length} game{games.length === 1 ? '' : 's'} in the last {RECENT_DAYS} days{games.length ? ` · ${tally.Win}W ${tally.Loss}L ${tally.Draw}D` : ''}{skipped ? ` · ${skipped} variant game${skipped === 1 ? '' : 's'} skipped` : ''}</p>}
         <ul className="list glist">{(games ?? []).map((g, i) => <li key={g.url ?? i}><button className="gbtn" onClick={() => start(g.pgn)}>

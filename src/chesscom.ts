@@ -4,6 +4,8 @@
  * overlaps [now - days, now] and then filter by each game's own end_time. No login, no private endpoints.
  */
 export const RECENT_DAYS = 30
+/** Suggested username shown to first-time visitors (public account; never saved as the user's remembered name). */
+export const EXAMPLE_USERNAME = 'MagnusCarlsen'
 export interface RecentGame { pgn: string; url?: string; endTime: number; date: string; result: 'Win' | 'Loss' | 'Draw'; color: 'w' | 'b'; opponent: string; oppRating?: number; timeClass: string; reason: string }
 export class ChessComError extends Error { constructor(msg: string, readonly status?: number) { super(msg) } }
 export const normalizeUsername = (u: string) => u.trim().toLowerCase()

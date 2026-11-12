@@ -9,7 +9,7 @@ EvalMate reviews a finished chess game with the **Stockfish** engine and shows y
 ## Features
 
 - **Import games**
-  - Chess.com: type a username and EvalMate lists every standard game from the **last 30 days** (across months). The username is remembered on your device.
+  - Chess.com: type a username and EvalMate lists every standard game from the **last 30 days** (across months). The username is remembered on your device. First visit? Click **Try an example: MagnusCarlsen** to see how it works (the example is never saved as your username).
   - Or paste a PGN / upload a `.pgn` file.
 - **Real engine analysis** — Stockfish 19 (WebAssembly, in a Web Worker) analyses every position. Choose Quick, Standard or Deep. A loading page shows live progress.
 - **Move classification** — Brilliant, Great, Best, Excellent, Good, Book, Inaccuracy, Mistake, Miss, Blunder, with Chess.com-style icons and colours.
